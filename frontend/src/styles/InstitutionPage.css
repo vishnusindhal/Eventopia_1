@@ -1,0 +1,103 @@
+.institution-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.institution-header {
+  text-align: center;
+  padding: 2rem 0 3rem;
+}
+
+.back-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #f1f5f9;
+  color: #3b82f6;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  transition: all 0.3s;
+}
+
+.back-button:hover {
+  background: #e2e8f0;
+  transform: translateX(-5px);
+}
+
+.institution-header h1 {
+  font-size: 2.5rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.institution-header p {
+  font-size: 1.2rem;
+  color: #64748b;
+}
+
+.colleges-container {
+  margin-top: 2rem;
+}
+
+.colleges-container h2 {
+  font-size: 1.8rem;
+  color: #1e293b;
+  margin-bottom: 2rem;
+}
+
+.colleges-grid-page {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.college-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.college-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
+}
+
+.college-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.college-card h3 {
+  font-size: 1.2rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.arrow-icon {
+  font-size: 1.5rem;
+  color: #3b82f6;
+  transition: transform 0.3s;
+}
+
+.college-card:hover .arrow-icon {
+  transform: translateX(5px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .institution-header h1 {
+    font-size: 2rem;
+  }
+
+  .colleges-grid-page {
+    grid-template-columns: 1fr;
+  }
+}

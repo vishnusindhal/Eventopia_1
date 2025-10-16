@@ -1,0 +1,45 @@
+.institution-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.institution-card:hover {
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.institution-card.expanded {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.institution-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s;
+}
+
+.institution-header:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.institution-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.expand-icon {
+  font-size: 1.5rem;
+  font-weight: bold;
+  transition: transform 0.3s;
+}
+
+.institution-card.expanded .expand-icon {
+  transform: rotate(180deg);
+}

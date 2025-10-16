@@ -1,0 +1,36 @@
+.event-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.no-events {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.no-events p {
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .event-list {
+    grid-template-columns: 1fr;
+  }
+}

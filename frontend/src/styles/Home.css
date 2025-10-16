@@ -1,0 +1,165 @@
+.home-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  margin-bottom: 3rem;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.hero p {
+  font-size: 1.25rem;
+  opacity: 0.9;
+}
+
+/* Institutions Section */
+.institutions-section {
+  margin: 3rem 0;
+}
+
+.institutions-section h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #1e293b;
+}
+
+.institutions-grid-home {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.institution-card-home {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.institution-card-home::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.institution-card-home:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
+}
+
+.institution-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.institution-content h3 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.institution-description {
+  font-size: 1rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.institution-count {
+  font-size: 0.9rem;
+  color: #3b82f6;
+  font-weight: 600;
+  margin: 0;
+}
+
+.explore-button {
+  display: inline-flex;
+  align-items: center;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  transition: gap 0.3s;
+  gap: 0.5rem;
+}
+
+.institution-card-home:hover .explore-button {
+  gap: 1rem;
+}
+
+/* Stats Section */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 4rem 0;
+}
+
+.stat-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-card h3 {
+  font-size: 2.5rem;
+  color: #3b82f6;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card p {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  
+  .hero p {
+    font-size: 1rem;
+  }
+  
+  .institutions-grid-home {
+    grid-template-columns: 1fr;
+  }
+
+  .institution-content h3 {
+    font-size: 1.5rem;
+  }
+}
