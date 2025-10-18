@@ -1,90 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import EventCard from '../components/EventCard';
+import { getUserEvents, getRegisteredEvents, getUserStats } from '../services/userService';
+import { deleteEvent } from '../services/eventService';
+import { logout, getUser } from '../services/authService';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    college: 'IIIT Surat'
-  });
+  const [user, setUser] = useState(getUser());
   const [myEvents, setMyEvents] = useState([]);
   const [registeredEvents, setRegisteredEvents] = useState([]);
+  const [stats, setStats] = useState({});
   const [activeTab, setActiveTab] = useState('submitted');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchUserData();
   }, []);
 
   const fetchUserData = async () => {
+    setLoading(true);
     try {
-      // Replace with your actual API endpoints
-      // const response = await fetch('/api/user/events', {
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-      //   }
-      // });
-      
-      // Sample data
-      const sampleMyEvents = [
-        {
-          id: 1,
-          title: 'TechFest 2024',
-          date: '2024-11-15',
-          type: 'Technical',
-          description: 'Annual technical festival',
-          college: 'IIIT Surat',
-          status: 'approved'
-        },
-        {
-          id: 2,
-          title: 'Code Sprint',
-          date: '2024-11-20',
-          type: 'Hackathon',
-          description: '24-hour coding marathon',
-          college: 'IIIT Surat',
-          status: 'pending'
-        }
-      ];
+      const [eventsRes, registeredRes, statsRes] = await Promise.all([
+        getUserEvents(),
+        getRegisteredEvents(),
+        getUserStats()
+      ]);
 
-      const sampleRegisteredEvents = [
-        {
-          id: 3,
-          title: 'AI Workshop',
-          date: '2024-11-25',
-          type: 'Workshop',
-          description: 'Hands-on AI workshop',
-          college: 'IIT Delhi'
-        }
-      ];
-
-      setMyEvents(sampleMyEvents);
-      setRegisteredEvents(sampleRegisteredEvents);
+      setMyEvents(eventsRes.events || []);
+      setRegisteredEvents(registeredRes.events || []);
+      setStats(statsRes.stats || {});
     } catch (error) {
       console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    // localStorage.removeItem('token');
+    logout();
     navigate('/');
   };
 
-  const handleDeleteEvent = (eventId) => {
+  const handleDeleteEvent = async (eventId) => {
     if (window.confirm('Are you sure you want to delete this event?')) {
-      setMyEvents(myEvents.filter(event => event.id !== eventId));
-      // Add API call: await fetch(`/api/events/${eventId}`, { method: 'DELETE' })
+      try {
+        await deleteEvent(eventId);
+        setMyEvents(myEvents.filter(event => event._id !== eventId));
+        alert('Event deleted successfully');
+      } catch (error) {
+        alert(error.message || 'Failed to delete event');
+      }
     }
   };
+
+  if (loading) {
+    return <div className="loading-page">Loading dashboard...</div>;
+  }
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
         <div className="user-info">
-          <h1>Welcome, {user.name}!</h1>
-          <p>{user.email} • {user.college}</p>
+          <h1>Welcome, {user?.name}!</h1>
+          <p>{user?.email} • {user?.college}</p>
         </div>
         <div className="header-actions">
           <Link to="/submit" className="btn-primary">Submit Event</Link>
@@ -94,15 +74,15 @@ const Dashboard = () => {
 
       <div className="dashboard-stats">
         <div className="stat-box">
-          <h3>{myEvents.length}</h3>
+          <h3>{stats.submittedEvents || 0}</h3>
           <p>Events Submitted</p>
         </div>
         <div className="stat-box">
-          <h3>{registeredEvents.length}</h3>
+          <h3>{stats.registeredEvents || 0}</h3>
           <p>Events Registered</p>
         </div>
         <div className="stat-box">
-          <h3>{myEvents.filter(e => e.status === 'approved').length}</h3>
+          <h3>{stats.approvedEvents || 0}</h3>
           <p>Approved Events</p>
         </div>
       </div>
@@ -129,14 +109,14 @@ const Dashboard = () => {
               {myEvents.length > 0 ? (
                 <div className="events-grid">
                   {myEvents.map(event => (
-                    <div key={event.id} className="event-wrapper">
+                    <div key={event._id} className="event-wrapper">
                       <EventCard event={event} />
                       <div className="event-actions">
                         <span className={`status-badge ${event.status}`}>
                           {event.status}
                         </span>
                         <button
-                          onClick={() => handleDeleteEvent(event.id)}
+                          onClick={() => handleDeleteEvent(event._id)}
                           className="btn-delete"
                         >
                           Delete
@@ -159,7 +139,7 @@ const Dashboard = () => {
               {registeredEvents.length > 0 ? (
                 <div className="events-grid">
                   {registeredEvents.map(event => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard key={event._id} event={event} />
                   ))}
                 </div>
               ) : (

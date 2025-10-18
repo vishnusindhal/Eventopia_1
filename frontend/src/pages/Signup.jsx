@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { register } from '../services/authService';
 import '../styles/Auth.css';
 
 const Signup = () => {
@@ -8,10 +9,12 @@ const Signup = () => {
     name: '',
     email: '',
     college: '',
+    institutionType: 'IIIT',
     password: '',
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,7 +28,6 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -36,31 +38,17 @@ const Signup = () => {
       return;
     }
 
+    setLoading(true);
+    setError('');
+
     try {
-      // Replace with your actual API endpoint
-      // const response = await fetch('/api/auth/signup', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
-      
-      // const data = await response.json();
-      
-      // if (response.ok) {
-      //   navigate('/login');
-      // } else {
-      //   setError(data.message || 'Signup failed');
-      // }
-      
-      // Demo: Navigate to login
-      console.log('Signup attempted with:', formData);
-      navigate('/login');
-      
-    } catch (error) {
-      console.error('Signup error:', error);
-      setError('An error occurred. Please try again.');
+      const { confirmPassword, ...userData } = formData;
+      await register(userData);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,6 +86,22 @@ const Signup = () => {
                 required
                 placeholder="you@example.com"
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="institutionType">Institution Type</label>
+              <select
+                id="institutionType"
+                name="institutionType"
+                value={formData.institutionType}
+                onChange={handleChange}
+                required
+              >
+                <option value="IIIT">IIIT</option>
+                <option value="NIT">NIT</option>
+                <option value="IIT">IIT</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
 
             <div className="form-group">
@@ -139,8 +143,8 @@ const Signup = () => {
               />
             </div>
 
-            <button type="submit" className="auth-button">
-              Create Account
+            <button type="submit" className="auth-button" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 

@@ -25,7 +25,9 @@ const IIT = () => {
   return (
     <div className="institution-page">
       <div className="institution-header">
-        <Link to="/" className="back-button">← Back to Home</Link>
+        <Link to="/" className="back-button">
+          ← Back to Home
+        </Link>
         <h1>Indian Institutes of Technology (IITs)</h1>
         <p>Explore events from premier IITs across India</p>
       </div>

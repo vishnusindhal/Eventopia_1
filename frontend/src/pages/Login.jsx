@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { login } from '../services/authService';
 import '../styles/Auth.css';
 
 const Login = () => {
@@ -9,6 +10,7 @@ const Login = () => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,33 +23,16 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
     try {
-      // Replace with your actual API endpoint
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
-      
-      // const data = await response.json();
-      
-      // if (response.ok) {
-      //   localStorage.setItem('token', data.token);
-      //   navigate('/dashboard');
-      // } else {
-      //   setError(data.message || 'Login failed');
-      // }
-      
-      // Demo: Navigate to dashboard
-      console.log('Login attempted with:', formData);
+      await login(formData);
       navigate('/dashboard');
-      
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('An error occurred. Please try again.');
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,8 +82,8 @@ const Login = () => {
               </Link>
             </div>
 
-            <button type="submit" className="auth-button">
-              Login
+            <button type="submit" className="auth-button" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 

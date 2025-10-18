@@ -33,12 +33,12 @@ const Home = () => {
 
       <section className="institutions-section">
         <h2>Browse by Institution Type</h2>
-        <div className="institutions-grid-home">
+        <div className="institutions-grid">
           {institutions.map((institution) => (
             <Link
               key={institution.type}
               to={institution.path}
-              className="institution-card-home"
+              className="institution-card"
             >
               <div className="institution-content">
                 <h3>{institution.type}</h3>

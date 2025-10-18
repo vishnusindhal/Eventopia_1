@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import EventList from './EventList';
+import { getEventsByCollege } from '../services/eventService';
 import '../styles/CollegeList.css';
 
 const CollegeList = ({ colleges, selectedCollege, onCollegeSelect, institutionType }) => {
@@ -15,39 +16,9 @@ const CollegeList = ({ colleges, selectedCollege, onCollegeSelect, institutionTy
   const fetchEvents = async (collegeName) => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      // const response = await fetch(`/api/events?college=${collegeName}`);
-      // const data = await response.json();
-      
-      // Sample data for demonstration
-      const sampleEvents = [
-        {
-          id: 1,
-          title: 'TechFest 2024',
-          date: '2024-11-15',
-          type: 'Technical',
-          description: 'Annual technical festival with coding competitions and workshops',
-          college: collegeName
-        },
-        {
-          id: 2,
-          title: 'CodeSprint Hackathon',
-          date: '2024-11-20',
-          type: 'Hackathon',
-          description: '24-hour coding marathon with exciting prizes',
-          college: collegeName
-        },
-        {
-          id: 3,
-          title: 'Cultural Night',
-          date: '2024-12-01',
-          type: 'Cultural',
-          description: 'Experience diverse cultural performances and art exhibitions',
-          college: collegeName
-        }
-      ];
-      
-      setEvents(sampleEvents);
+      const slug = collegeName.toLowerCase().replace(/\s+/g, '-');
+      const response = await getEventsByCollege(slug);
+      setEvents(response.events || []);
     } catch (error) {
       console.error('Error fetching events:', error);
       setEvents([]);

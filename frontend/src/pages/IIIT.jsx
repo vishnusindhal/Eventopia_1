@@ -18,7 +18,6 @@ const IIIT = () => {
     'IIIT Nagpur'
   ];
 
-  // Convert college name to URL-friendly format
   const getCollegeSlug = (collegeName) => {
     return collegeName.toLowerCase().replace(/\s+/g, '-');
   };
@@ -26,7 +25,9 @@ const IIIT = () => {
   return (
     <div className="institution-page">
       <div className="institution-header">
-        <Link to="/" className="back-button">← Back to Home</Link>
+        <Link to="/" className="back-button">
+          ← Back to Home
+        </Link>
         <h1>Indian Institutes of Information Technology (IIITs)</h1>
         <p>Explore events from premier IIITs across India</p>
       </div>

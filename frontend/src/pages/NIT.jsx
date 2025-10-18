@@ -25,7 +25,9 @@ const NIT = () => {
   return (
     <div className="institution-page">
       <div className="institution-header">
-        <Link to="/" className="back-button">← Back to Home</Link>
+        <Link to="/" className="back-button">
+          ← Back to Home
+        </Link>
         <h1>National Institutes of Technology (NITs)</h1>
         <p>Explore events from premier NITs across India</p>
       </div>

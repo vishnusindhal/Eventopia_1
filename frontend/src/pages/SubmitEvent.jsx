@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createEvent } from '../services/eventService';
+import { isAuthenticated } from '../services/authService';
 import '../styles/SubmitEvent.css';
 
 const SubmitEvent = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -18,6 +22,8 @@ const SubmitEvent = () => {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,41 +35,27 @@ const SubmitEvent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isAuthenticated()) {
+      alert('Please login to submit an event');
+      navigate('/login');
+      return;
+    }
     
+    setLoading(true);
+    setError('');
+
     try {
-      // Replace with your actual API endpoint
-      // const response = await fetch('/api/events', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(formData)
-      // });
-      
-      console.log('Event submitted:', formData);
+      await createEvent(formData);
       setSubmitted(true);
       
-      // Reset form after 3 seconds
       setTimeout(() => {
-        setFormData({
-          title: '',
-          description: '',
-          type: 'Technical',
-          college: '',
-          institutionType: 'IIIT',
-          date: '',
-          endDate: '',
-          venue: '',
-          organizer: '',
-          contact: '',
-          registrationLink: '',
-          image: ''
-        });
-        setSubmitted(false);
-      }, 3000);
+        navigate('/dashboard');
+      }, 2000);
       
-    } catch (error) {
-      console.error('Error submitting event:', error);
+    } catch (err) {
+      setError(err.message || 'Failed to submit event. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -77,6 +69,12 @@ const SubmitEvent = () => {
       {submitted && (
         <div className="success-message">
           <p>✓ Event submitted successfully! It will be reviewed and published soon.</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="error-message">
+          <p>{error}</p>
         </div>
       )}
 
@@ -248,8 +246,8 @@ const SubmitEvent = () => {
           />
         </div>
 
-        <button type="submit" className="submit-button">
-          Submit Event
+        <button type="submit" className="submit-button" disabled={loading}>
+          {loading ? 'Submitting...' : 'Submit Event'}
         </button>
       </form>
     </div>

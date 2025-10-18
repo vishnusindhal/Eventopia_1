@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { getEventById, registerForEvent } from '../services/eventService';
+import { isAuthenticated } from '../services/authService';
 import '../styles/EventDetails.css';
 
 const EventDetails = () => {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [registering, setRegistering] = useState(false);
 
   useEffect(() => {
     fetchEventDetails();
@@ -14,43 +17,31 @@ const EventDetails = () => {
   const fetchEventDetails = async () => {
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      // const response = await fetch(`/api/events/${id}`);
-      // const data = await response.json();
-      
-      // Sample data
-      const sampleEvent = {
-        id: id,
-        title: 'TechFest 2024',
-        date: '2024-11-15',
-        endDate: '2024-11-17',
-        type: 'Technical',
-        description: 'TechFest 2024 is the annual technical festival featuring coding competitions, workshops, and tech talks from industry experts.',
-        college: 'IIIT Surat',
-        venue: 'Main Auditorium',
-        organizer: 'Technical Club',
-        contact: 'techfest@iiitsurat.ac.in',
-        registrationLink: 'https://example.com/register',
-        image: 'https://via.placeholder.com/800x400',
-        highlights: [
-          'Coding competitions with prizes worth ₹50,000',
-          'Workshops on AI/ML, Web Development, and Blockchain',
-          'Tech talks from industry leaders',
-          'Networking opportunities with tech professionals'
-        ],
-        schedule: [
-          { time: '10:00 AM', activity: 'Opening Ceremony' },
-          { time: '11:00 AM', activity: 'Coding Competition Round 1' },
-          { time: '02:00 PM', activity: 'Workshop: Introduction to AI' },
-          { time: '04:00 PM', activity: 'Tech Talk: Future of Technology' }
-        ]
-      };
-      
-      setEvent(sampleEvent);
+      const response = await getEventById(id);
+      setEvent(response.event);
     } catch (error) {
       console.error('Error fetching event details:', error);
+      setEvent(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!isAuthenticated()) {
+      alert('Please login to register for this event');
+      return;
+    }
+
+    setRegistering(true);
+    try {
+      await registerForEvent(id);
+      alert('Successfully registered for the event!');
+      fetchEventDetails(); // Refresh event details
+    } catch (error) {
+      alert(error.message || 'Failed to register for event');
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -75,7 +66,7 @@ const EventDetails = () => {
   return (
     <div className="event-details-page">
       <div className="event-details-header">
-        <img src={event.image} alt={event.title} className="event-banner" />
+        <img src={event.image || 'https://via.placeholder.com/800x400'} alt={event.title} className="event-banner" />
         <div className="event-details-overlay">
           <span className="event-type-badge">{event.type}</span>
           <h1>{event.title}</h1>
@@ -90,26 +81,30 @@ const EventDetails = () => {
             <p>{event.description}</p>
           </section>
 
-          <section className="info-section">
-            <h2>Highlights</h2>
-            <ul className="highlights-list">
-              {event.highlights.map((highlight, index) => (
-                <li key={index}>{highlight}</li>
-              ))}
-            </ul>
-          </section>
+          {event.highlights && event.highlights.length > 0 && (
+            <section className="info-section">
+              <h2>Highlights</h2>
+              <ul className="highlights-list">
+                {event.highlights.map((highlight, index) => (
+                  <li key={index}>{highlight}</li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-          <section className="info-section">
-            <h2>Schedule</h2>
-            <div className="schedule-list">
-              {event.schedule.map((item, index) => (
-                <div key={index} className="schedule-item">
-                  <span className="schedule-time">{item.time}</span>
-                  <span className="schedule-activity">{item.activity}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+          {event.schedule && event.schedule.length > 0 && (
+            <section className="info-section">
+              <h2>Schedule</h2>
+              <div className="schedule-list">
+                {event.schedule.map((item, index) => (
+                  <div key={index} className="schedule-item">
+                    <span className="schedule-time">{item.time}</span>
+                    <span className="schedule-activity">{item.activity}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         <div className="event-sidebar">
@@ -139,8 +134,12 @@ const EventDetails = () => {
             </div>
           </div>
 
-          <button className="register-button">
-            Register Now
+          <button 
+            className="register-button" 
+            onClick={handleRegister}
+            disabled={registering}
+          >
+            {registering ? 'Registering...' : 'Register Now'}
           </button>
 
           <Link to="/events" className="back-link">
