@@ -193,6 +193,32 @@
   text-decoration: underline;
 }
 
+/* Admin Login Link */
+.admin-login-link-container {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e2e8f0;
+  text-align: center;
+}
+
+.admin-login-link {
+  display: inline-block;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.admin-login-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(220, 38, 38, 0.4);
+  text-decoration: none;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .auth-card {

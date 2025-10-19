@@ -100,6 +100,12 @@ const Login = () => {
           <p className="auth-switch">
             Don't have an account? <Link to="/signup">Sign up</Link>
           </p>
+
+          <div className="admin-login-link-container">
+            <Link to="/admin-login" className="admin-login-link">
+              🔐 Admin Portal Login
+            </Link>
+          </div>
         </div>
       </div>
     </div>
