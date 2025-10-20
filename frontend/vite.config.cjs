@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    extensions: ['.js', '.jsx']
-  }
+    extensions: ['.js', '.jsx'],
+  },
+  server: {
+    allowedHosts: ['eventopia-1-4.onrender.com'], // 👈 add your Render frontend domain
+    port: 5173, // optional (safe default)
+  },
 })

@@ -107,6 +107,7 @@ const SubmitEvent = () => {
               <option value="Hackathon">Hackathon</option>
               <option value="Workshop">Workshop</option>
               <option value="Seminar">Seminar</option>
+              <option value="Sports">Seminar</option>
             </select>
           </div>
         </div>
