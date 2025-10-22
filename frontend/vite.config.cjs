@@ -8,7 +8,7 @@ export default defineConfig({
     extensions: ['.js', '.jsx'],
   },
   server: {
-    allowedHosts: ['eventopia-1-4.onrender.com'], // 👈 add your Render frontend domain
+    allowedHosts: ['eventopia-1-8.onrender.com'], // 👈 add your Render frontend domain
     port: 5173, // optional (safe default)
   },
 })
