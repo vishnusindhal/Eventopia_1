@@ -11,6 +11,9 @@ const CollegePage = () => {
   const [error, setError] = useState('');
 
   const formatCollegeName = (slug) => {
+    // We already know collegeName exists here because it's a route param,
+    // but the slug could potentially be empty, so we keep the check simple.
+    if (!slug) return '';
     return slug
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -28,6 +31,13 @@ const CollegePage = () => {
     setError('');
     try {
       console.log('Fetching events for:', displayName);
+      // Ensure collegeName exists before calling the API
+      if (!collegeName) {
+        console.warn('collegeName is missing, skipping API call.');
+        setEvents([]);
+        return;
+      }
+      
       const response = await getEventsByCollege(collegeName);
       console.log('API Response:', response);
       
@@ -51,8 +61,16 @@ const CollegePage = () => {
   return (
     <div className="college-page">
       <div className="college-page-header">
-        <Link to={`/${institutionType}`} className="back-button">
-          ← Back to {institutionType.toUpperCase()}s
+        {/*
+          🔥 FIX APPLIED HERE (Line 55):
+          We check if institutionType is truthy before calling .toUpperCase().
+          If it's undefined (or null), we use a safe fallback string ('BACK').
+        */}
+        <Link 
+          to={`/${institutionType || ''}`} 
+          className="back-button"
+        >
+          ← Back to {institutionType ? `${institutionType.toUpperCase()}s` : 'List'}
         </Link>
         <h1>{displayName}</h1>
         <p>Upcoming events and activities</p>
