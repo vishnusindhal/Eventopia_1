@@ -7,7 +7,7 @@ import { getUser, updateProfile, updatePassword } from '../services/authService'
 import '../styles/Profile.css';
 
 const Profile = () => {
-  const [user, setUser] = useState(getUser());
+  const [user, setUser] = useState(null);
   const [myEvents, setMyEvents] = useState([]);
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [stats, setStats] = useState({});
@@ -17,9 +17,9 @@ const Profile = () => {
   const [passwordMode, setPasswordMode] = useState(false);
 
   const [editForm, setEditForm] = useState({
-    name: user?.name || '',
-    college: user?.college || '',
-    institutionType: user?.institutionType || ''
+    name: '',
+    college: '',
+    institutionType: ''
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -31,11 +31,28 @@ const Profile = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    fetchUserData();
+    const initProfile = async () => {
+      setLoading(true);
+      try {
+        const userData = await getUser();
+        setUser(userData);
+        setEditForm({
+          name: userData?.name || '',
+          college: userData?.college || '',
+          institutionType: userData?.institutionType || ''
+        });
+        await fetchUserData();
+      } catch (error) {
+        console.error('Failed to initialize profile:', error);
+        setMessage({ type: 'error', text: 'Failed to load profile' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    initProfile();
   }, []);
 
   const fetchUserData = async () => {
-    setLoading(true);
     try {
       const [eventsRes, registeredRes, statsRes] = await Promise.all([
         getUserEvents(),
@@ -48,8 +65,7 @@ const Profile = () => {
       setStats(statsRes.stats || {});
     } catch (error) {
       console.error('Error fetching user data:', error);
-    } finally {
-      setLoading(false);
+      setMessage({ type: 'error', text: 'Failed to load user data' });
     }
   };
 

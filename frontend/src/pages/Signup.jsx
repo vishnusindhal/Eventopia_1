@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/Auth.css';
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,8 +45,13 @@ const Signup = () => {
 
     try {
       const { confirmPassword, ...userData } = formData;
-      await register(userData);
-      navigate('/dashboard');
+      const response = await register(userData);
+      if (response.success) {
+        await authLogin(response.token);
+        navigate('/dashboard');
+      } else {
+        setError(response.message || 'Registration failed');
+      }
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {

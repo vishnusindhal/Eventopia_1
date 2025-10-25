@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../services/eventService';
-import { isAuthenticated } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/SubmitEvent.css';
 
 const SubmitEvent = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -35,15 +36,17 @@ const SubmitEvent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!isAuthenticated()) {
-      alert('Please login to submit an event');
-      navigate('/login');
-      return;
-    }
     
     setLoading(true);
     setError('');
+
+    try {
+      const authenticated = await isAuthenticated();
+      if (!authenticated) {
+        alert('Please login to submit an event');
+        navigate('/login');
+        return;
+      }
 
     try {
       await createEvent(formData);

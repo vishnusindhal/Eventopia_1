@@ -1,12 +1,13 @@
 import api from './api';
 
+let currentUser = null;
+
 // Register user
 export const register = async (userData) => {
   try {
     const response = await api.post('/auth/register', userData);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    if (response.data.user) {
+      currentUser = response.data.user;
     }
     return response.data;
   } catch (error) {
@@ -18,9 +19,8 @@ export const register = async (userData) => {
 export const login = async (credentials) => {
   try {
     const response = await api.post('/auth/login', credentials);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    if (response.data.user) {
+      currentUser = response.data.user;
     }
     return response.data;
   } catch (error) {
@@ -29,17 +29,25 @@ export const login = async (credentials) => {
 };
 
 // Logout user
-export const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+export const logout = async () => {
+  try {
+    await api.post('/auth/logout');
+    currentUser = null;
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 };
 
 // Get current user
 export const getCurrentUser = async () => {
   try {
-    const response = await api.get('/auth/me');
-    return response.data;
+    if (!currentUser) {
+      const response = await api.get('/auth/me');
+      currentUser = response.data.user;
+    }
+    return currentUser;
   } catch (error) {
+    currentUser = null;
     throw error.response?.data || { message: 'Failed to fetch user' };
   }
 };
@@ -48,7 +56,9 @@ export const getCurrentUser = async () => {
 export const updateProfile = async (userData) => {
   try {
     const response = await api.put('/auth/updateprofile', userData);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+    if (response.data.user) {
+      currentUser = response.data.user;
+    }
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Failed to update profile' };
@@ -59,22 +69,23 @@ export const updateProfile = async (userData) => {
 export const updatePassword = async (passwords) => {
   try {
     const response = await api.put('/auth/updatepassword', passwords);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Failed to update password' };
   }
 };
 
-// Check if user is logged in
-export const isAuthenticated = () => {
-  return !!localStorage.getItem('token');
+// Check if user is logged in by verifying the session
+export const isAuthenticated = async () => {
+  try {
+    await getCurrentUser();
+    return true;
+  } catch (error) {
+    return false;
+  }
 };
 
-// Get user from localStorage
-export const getUser = () => {
-  const user = localStorage.getItem('user');
-  return user ? JSON.parse(user) : null;
+// Get user from memory or fetch from server
+export const getUser = async () => {
+  return getCurrentUser();
 };

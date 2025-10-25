@@ -3,12 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import EventCard from '../components/EventCard';
 import { getUserEvents, getRegisteredEvents, getUserStats } from '../services/userService';
 import { deleteEvent } from '../services/eventService';
-import { logout, getUser } from '../services/authService';
+import { logout } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(getUser());
+  const { user, logout: authLogout } = useAuth();
   const [myEvents, setMyEvents] = useState([]);
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [stats, setStats] = useState({});
@@ -16,8 +17,12 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     fetchUserData();
-  }, []);
+  }, [user, navigate]);
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -38,9 +43,14 @@ const Dashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      await authLogout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const handleDeleteEvent = async (eventId) => {
