@@ -6,19 +6,18 @@ import axios from 'axios';
 // we fallback to '/api' which will proxy to the backend when developing with a proxy or
 // hit the backend when the frontend and backend are served from the same origin under /api.
 const api = axios.create({
-  baseURL: import.meta.env.REACT_APP_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true // Enable sending cookies with requests
 });
 
-// Request interceptor to add token to headers
+// Request interceptor - cookies are automatically sent with requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // Cookies are automatically included when withCredentials is true
+    // No need to manually add Authorization header
     return config;
   },
   (error) => {
@@ -31,9 +30,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // Token expired or invalid - redirect to login
+      // The server should clear the cookie on logout/token expiry
       window.location.href = '/login';
     }
     return Promise.reject(error);
