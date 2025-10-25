@@ -40,13 +40,11 @@ const SubmitEvent = () => {
     setLoading(true);
     setError('');
 
-    try {
-      const authenticated = await isAuthenticated();
-      if (!authenticated) {
-        alert('Please login to submit an event');
-        navigate('/login');
-        return;
-      }
+    if (!user) {
+      alert('Please login to submit an event');
+      navigate('/login');
+      return;
+    }
 
     try {
       await createEvent(formData);
@@ -58,9 +56,9 @@ const SubmitEvent = () => {
       
     } catch (err) {
       setError(err.message || 'Failed to submit event. Please try again.');
+    } finally {
       setLoading(false);
     }
-  };
 
   return (
     <div className="submit-event-page">
@@ -256,6 +254,7 @@ const SubmitEvent = () => {
       </form>
     </div>
   );
+}  
 };
 
 export default SubmitEvent;
