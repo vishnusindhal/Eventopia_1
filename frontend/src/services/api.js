@@ -6,7 +6,7 @@ import axios from 'axios';
 // we fallback to '/api' which will proxy to the backend when developing with a proxy or
 // hit the backend when the frontend and backend are served from the same origin under /api.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: "https://eventopia-1-5.onrender.com/api",
   headers: {
     'Content-Type': 'application/json'
   },
