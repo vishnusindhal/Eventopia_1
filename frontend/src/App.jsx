@@ -138,7 +138,7 @@ function App() {
         </Routes>
 
         <footer className="footer">
-          <p>&copy; 2024 Eventopia. Democratizing access to technical events.</p>
+          <p>&copy; 2025 Eventopia. Democratizing access to technical events.</p>
         </footer>
       </div>
     </Router>

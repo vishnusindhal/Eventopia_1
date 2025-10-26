@@ -8,11 +8,29 @@ dotenv.config();
 
 // --- Configuration for Deployed CORS ---
 // IMPORTANT: The frontend URL (e.g., https://my-frontend.onrender.com) MUST be set in the CORS_ORIGIN environment variable.
-const allowedOrigin = process.env.CLIENT_URL; 
 
-if (!allowedOrigin) {
-    console.warn("CORS_ORIGIN environment variable is not set. API access may be restricted or improperly configured.");
+
+const rawClient = process.env.CLIENT_URL || process.env.CORS_ORIGIN || '';
+const allowedOrigins = rawClient
+    ? rawClient.split(',').map(s => s.trim()).filter(Boolean)
+    : (process.env.NODE_ENV === 'development' ? ['http://localhost:5173'] : []);
+
+if (allowedOrigins.length === 0) {
+    console.warn('No CLIENT_URL/CORS_ORIGIN configured. Cross-origin requests will be restricted.');
+} else {
+    console.log('Allowed CORS origins:', allowedOrigins);
 }
+
+// cors origin callback ensures we only allow exact origins (required when credentials: true)
+const corsOrigin = (origin, callback) => {
+    // allow requests with no origin (e.g. same-origin, curl, mobile apps)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    // not allowed
+    return callback(new Error('Not allowed by CORS'));
+};
 // ---------------------------------------
 
 // Import routes
@@ -24,10 +42,10 @@ const app = express();
 
 // --- Middleware: CORS Configuration ---
 app.use(cors({
-    origin: allowedOrigin,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // MUST be true if your login/auth uses cookies or sessions.
-    optionsSuccessStatus: 200 
+        origin: corsOrigin,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        credentials: true, // MUST be true if your login/auth uses cookies or sessions.
+        optionsSuccessStatus: 200 
 }));
 // --------------------------------------
 
