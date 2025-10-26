@@ -5,10 +5,8 @@ import axios from 'axios';
 // Use VITE_API_URL to point to the backend (e.g. https://your-backend.com/api). If not provided
 // we fallback to '/api' which will proxy to the backend when developing with a proxy or
 // hit the backend when the frontend and backend are served from the same origin under /api.
-// Prefer using VITE_API_URL so you don't need to edit this file per deploy.
-// Set VITE_API_URL in `frontend/.env.local` (or on your host) to e.g. "https://your-backend.onrender.com/api"
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://eventopia-1-5.onrender.com/api',
+  baseURL: import.meta.env.REACT_APP_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json'
   },
