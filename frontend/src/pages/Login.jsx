@@ -30,11 +30,15 @@ const Login = () => {
     
     try {
       const response = await login(formData);
-      if (response.success) {
-        await authLogin(response.token);
+      console.debug('Login response:', response);
+
+      // Accept success flag or presence of token/user as success
+      if (response && (response.success || response.token || response.user)) {
+        const token = response.token;
+        await authLogin(token || response.user);
         navigate('/dashboard');
       } else {
-        setError(response.message || 'Login failed');
+        setError(response?.message || 'Login failed');
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');

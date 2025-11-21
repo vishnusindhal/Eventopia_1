@@ -23,6 +23,7 @@ export const register = async (userData) => {
 export const login = async (credentials) => {
   try {
     const response = await api.post('/auth/login', credentials);
+    if (import.meta.env.DEV) console.debug('authService.login response:', response.data);
     if (response.data.user) {
       currentUser = response.data.user;
     }

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import api from '../services/api';
 import { isAuthenticated, getUser } from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -31,7 +32,23 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (userData) => {
-    setUser(userData);
+    // Accept a token (preferred) or a user object. If token is provided,
+    // ensure axios has the Authorization header and fetch the current user.
+    try {
+      if (typeof userData === 'string') {
+        // treat as token
+        api.defaults.headers.common['Authorization'] = `Bearer ${userData}`;
+        await checkAuth();
+      } else if (userData && userData.id) {
+        // direct user object
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error('AuthContext.login error:', err);
+      setUser(null);
+    }
   };
 
   const logout = () => {
