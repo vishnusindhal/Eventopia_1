@@ -9,6 +9,10 @@ export const register = async (userData) => {
     if (response.data.user) {
       currentUser = response.data.user;
     }
+    // If backend returned a token, set default Authorization header for subsequent requests
+    if (response.data.token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+    }
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Registration failed' };
@@ -22,6 +26,10 @@ export const login = async (credentials) => {
     if (response.data.user) {
       currentUser = response.data.user;
     }
+    // If backend returned a token, set default Authorization header for subsequent requests
+    if (response.data.token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+    }
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Login failed' };
@@ -33,6 +41,8 @@ export const logout = async () => {
   try {
     await api.post('/auth/logout');
     currentUser = null;
+    // Remove Authorization header on logout
+    delete api.defaults.headers.common['Authorization'];
   } catch (error) {
     console.error('Logout error:', error);
   }
