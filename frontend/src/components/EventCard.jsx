@@ -36,7 +36,8 @@ const EventCard = ({ event }) => {
       
       <div className="event-footer">
         <span className="event-college">{event.college}</span>
-        <Link to={`/event/${event.id}`} className="view-details">
+        {/* Use database _id if present, fallback to id for backwards compatibility */}
+        <Link to={`/event/${event._id || event.id}`} className="view-details">
           View Details →
         </Link>
       </div>

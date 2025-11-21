@@ -6,6 +6,22 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+// Startup info to help diagnose deployment issues (safe-to-print items only)
+console.log('NODE_ENV=', process.env.NODE_ENV || 'not-set');
+console.log('PORT=', process.env.PORT || 'not-set');
+console.log('MONGODB_URI set=', !!process.env.MONGODB_URI);
+
+// Global handlers to surface crashes in Render logs
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    // optional: exit process to allow platform to restart
+    // process.exit(1);
+});
+
 // --- Configuration for Deployed CORS ---
 // IMPORTANT: The frontend URL (e.g., https://my-frontend.onrender.com) MUST be set in the CORS_ORIGIN environment variable.
 
