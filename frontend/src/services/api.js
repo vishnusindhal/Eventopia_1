@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.REACT_APP_API_URL || "/api",
+  baseURL: import.meta.env.REACT_APP_API_URL || "https://eventopia-1-5.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },
