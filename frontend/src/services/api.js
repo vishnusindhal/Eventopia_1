@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://eventopia-1-5.onrender.com",
+  baseURL: "https://eventopia-1-5.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },
