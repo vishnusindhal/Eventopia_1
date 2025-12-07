@@ -8,7 +8,7 @@ const api = axios.create({
   },
   withCredentials: true,
 });
-console.log('API baseURL =', baseURL);
+
 // Request interceptor - cookies are automatically sent with requests
 api.interceptors.request.use(
   (config) => {
