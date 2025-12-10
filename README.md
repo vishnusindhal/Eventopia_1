@@ -6,19 +6,25 @@ Eventopia is a simple event discovery and management platform for college events
 
 ## Screenshots
 
-Add screenshots to `images/` and reference them here, for example:
 
-![Homepage placeholder](images/homepage.png)
-![Event details placeholder](images/event-details.png)
+
+![Homepage ](images/home.png)
+![Event details ](images/allEvent.png)
 
 ## Features
 
 - User authentication (register / login)
+![User login](images/loginU.png)
+![Admin login](images/loginA.png)
+
 - Submit and manage events (create, update, delete)
+![Submit Event](images/submitE.png)
+
 - Browse events by college or institution type (IIT / NIT / IIIT)
 - Admin approval workflow for submitted events
 - Register / unregister for events
 - User profile and basic stats
+![User Profile](images/Profile.png)
 
 ## Tech Stack
 
@@ -127,7 +133,7 @@ Please open issues for bugs or feature requests.
 
 ## License
 
-This project does not include a license file. Add a `LICENSE` file if you want to set a license (e.g., MIT).
+
 
 ## Notes / Next steps
 
@@ -137,7 +143,4 @@ This project does not include a license file. Add a `LICENSE` file if you want t
 
 ---
 
-If you want, I can also:
-- add a `backend/.env.example` file,
-- add example requests (curl / Postman collection), or
-- create a short CONTRIBUTING.md — tell me which and I'll add them.
+
