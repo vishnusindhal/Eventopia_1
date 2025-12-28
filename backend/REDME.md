@@ -31,7 +31,7 @@ NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/eventopia
 JWT_SECRET=your_secret_key
 JWT_EXPIRE=7d
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=http://localhost:5173
 ```
 
 4. Start MongoDB (if running locally)

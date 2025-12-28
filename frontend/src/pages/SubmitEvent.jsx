@@ -41,24 +41,28 @@ const SubmitEvent = () => {
     setError('');
 
     if (!user) {
+      setLoading(false);
       alert('Please login to submit an event');
       navigate('/login');
       return;
     }
 
     try {
-      await createEvent(formData);
+      const res = await createEvent(formData);
       setSubmitted(true);
-      
+
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
-      
+
     } catch (err) {
-      setError(err.message || 'Failed to submit event. Please try again.');
+      // prefer backend message when available
+      const message = err?.response?.data?.message || err?.message || 'Failed to submit event. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }
+  };
 
   return (
     <div className="submit-event-page">
@@ -108,7 +112,7 @@ const SubmitEvent = () => {
               <option value="Hackathon">Hackathon</option>
               <option value="Workshop">Workshop</option>
               <option value="Seminar">Seminar</option>
-              <option value="Sports">Seminar</option>
+              <option value="Sports">Sports</option>
             </select>
           </div>
         </div>
@@ -254,7 +258,6 @@ const SubmitEvent = () => {
       </form>
     </div>
   );
-}  
 };
 
 export default SubmitEvent;
