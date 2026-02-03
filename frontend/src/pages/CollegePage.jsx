@@ -30,7 +30,6 @@ const CollegePage = () => {
     setLoading(true);
     setError('');
     try {
-      console.log('Fetching events for:', displayName);
       // Ensure collegeName exists before calling the API
       if (!collegeName) {
         console.warn('collegeName is missing, skipping API call.');
@@ -39,13 +38,11 @@ const CollegePage = () => {
       }
       
       const response = await getEventsByCollege(collegeName);
-      console.log('API Response:', response);
       
       if (response && response.events) {
         // Filter to show only approved events
         const approvedEvents = response.events.filter(event => event.status === 'approved');
         setEvents(approvedEvents);
-        console.log('Approved Events:', approvedEvents);
       } else {
         setEvents([]);
       }
@@ -61,11 +58,7 @@ const CollegePage = () => {
   return (
     <div className="college-page">
       <div className="college-page-header">
-        {/*
-          🔥 FIX APPLIED HERE (Line 55):
-          We check if institutionType is truthy before calling .toUpperCase().
-          If it's undefined (or null), we use a safe fallback string ('BACK').
-        */}
+        {/* Safe navigation: check institutionType before calling toUpperCase() */}
         <Link 
           to={`/${institutionType || ''}`} 
           className="back-button"
