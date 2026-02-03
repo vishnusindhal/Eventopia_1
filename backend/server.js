@@ -59,8 +59,11 @@ const app = express();
 // --- Middleware: CORS Configuration ---
 app.use(cors({
         origin: corsOrigin,
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+        exposedHeaders: ['Content-Range', 'X-Content-Range'],
         credentials: true, // MUST be true if your login/auth uses cookies or sessions.
+        maxAge: 86400, // Cache preflight for 24 hours
         optionsSuccessStatus: 200 
 }));
 // --------------------------------------

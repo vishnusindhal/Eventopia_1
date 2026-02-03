@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getEventById, registerForEvent } from '../services/eventService';
 import { isAuthenticated } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/EventDetails.css';
 
 const EventDetails = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -103,6 +105,27 @@ const EventDetails = () => {
                   </div>
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* Organizer View: Registered Students */}
+          {user && event.createdBy && (user.id === event.createdBy._id || user._id === event.createdBy._id) && (
+            <section className="info-section">
+              <h2>Registered Students ({event.registeredUsers?.length || 0})</h2>
+              {event.registeredUsers && event.registeredUsers.length > 0 ? (
+                <div className="registered-users-list">
+                  {event.registeredUsers.map(student => (
+                    <div key={student._id} className="detail-item">
+                      <div className="student-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{student.name}</span>
+                      </div>
+                      <span className="detail-value">{student.email}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No students have registered for this event yet.</p>
+              )}
             </section>
           )}
         </div>
