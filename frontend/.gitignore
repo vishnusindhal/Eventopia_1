@@ -10,8 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
-.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +21,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ---- Environment files ----
+# .env          → Committed (contains safe defaults only — no secrets, no prod URLs)
+# .env.local    → Git-ignored (local overrides, machine-specific)
+# .env.*.local  → Git-ignored
+# .env.production → Git-ignored (set prod vars in Vercel dashboard instead)
+
+.env.local
+.env.*.local
+.env.production

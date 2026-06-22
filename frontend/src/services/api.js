@@ -1,8 +1,14 @@
 import axios from "axios";
+import { API_URL } from "../config/api";
+
+// In development, log which backend we are talking to so you can instantly
+// verify that the correct environment file is being picked up.
+if (import.meta.env.DEV) {
+  console.info(`[Eventopia] API baseURL → ${API_URL}`);
+}
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },

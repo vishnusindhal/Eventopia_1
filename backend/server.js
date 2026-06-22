@@ -22,32 +22,39 @@ process.on('uncaughtException', (err) => {
     // process.exit(1);
 });
 
-// --- Configuration for Deployed CORS ---
-// IMPORTANT: The frontend URL (e.g., https://my-frontend.onrender.com) MUST be set in the CORS_ORIGIN environment variable.
+// --- CORS Configuration ---
+// Set CLIENT_URL in your environment to a comma-separated list of allowed
+// frontend origins.  Examples:
+//   Local dev  → CLIENT_URL=http://localhost:5173
+//   Production → CLIENT_URL=https://eventopia-1.vercel.app
+//   Both       → CLIENT_URL=http://localhost:5173,https://eventopia-1.vercel.app
+//
+// The CORS_ORIGIN variable is also checked as a fallback alias.
 
+const rawClient = (process.env.CLIENT_URL || process.env.CORS_ORIGIN || '').trim();
 
-const rawClient = process.env.CLIENT_URL || process.env.CORS_ORIGIN || '';
+// Parse comma-separated origins and deduplicate
 const allowedOrigins = rawClient
-    ? rawClient.split(',').map(s => s.trim()).filter(Boolean)
+    ? [...new Set(rawClient.split(',').map(s => s.trim()).filter(Boolean))]
     : (process.env.NODE_ENV === 'development' ? ['http://localhost:5173'] : []);
 
 if (allowedOrigins.length === 0) {
-    console.warn('No CLIENT_URL/CORS_ORIGIN configured. Cross-origin requests will be restricted.');
+    console.warn('[CORS] No CLIENT_URL/CORS_ORIGIN configured. Cross-origin requests will be blocked.');
 } else {
-    console.log('Allowed CORS origins:', allowedOrigins);
+    console.log('[CORS] Allowed origins:', allowedOrigins);
 }
 
-// cors origin callback ensures we only allow exact origins (required when credentials: true)
+// Strict origin callback — required when credentials: true
 const corsOrigin = (origin, callback) => {
-    // allow requests with no origin (e.g. same-origin, curl, mobile apps)
+    // Allow requests with no Origin header (same-origin, curl, mobile apps, Render health checks)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) return callback(null, true);
 
-    // not allowed
-    return callback(new Error('Not allowed by CORS'));
+    console.warn(`[CORS] Blocked request from origin: ${origin}`);
+    return callback(new Error(`Origin '${origin}' not allowed by CORS`));
 };
-// ---------------------------------------
+// -----------------------------------
 
 // Import routes
 const authRoutes = require('./routes/auth');
