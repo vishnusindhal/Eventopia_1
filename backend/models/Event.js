@@ -13,7 +13,12 @@ const eventSchema = new mongoose.Schema({
   type: {
     type: String,
     required: [true, 'Please provide event type'],
-    enum: ['Technical', 'Cultural', 'Hackathon', 'Workshop', 'Seminar','Sports']
+    enum: [
+      'Technical', 'Cultural', 'Hackathon', 'Workshop', 'Seminar', 'Sports',
+      'Webinar', 'Competition', 'Internship', 'Placement Drive',
+      'Tech Fest', 'Cultural Fest', 'Sports Event', 'Coding Contest',
+      'Research Program', 'Open Source Program', 'Scholarship'
+    ]
   },
   college: {
     type: String,
@@ -22,7 +27,7 @@ const eventSchema = new mongoose.Schema({
   institutionType: {
     type: String,
     required: [true, 'Please provide institution type'],
-    enum: ['IIIT', 'NIT', 'IIT']
+    enum: ['IIIT', 'NIT', 'IIT', 'Other']
   },
   date: {
     type: Date,
@@ -58,6 +63,17 @@ const eventSchema = new mongoose.Schema({
     time: String,
     activity: String
   }],
+  registrationDeadline: {
+    type: Date
+  },
+  views: {
+    type: Number,
+    default: 0
+  },
+  subscriberCount: {
+    type: Number,
+    default: 0
+  },
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],

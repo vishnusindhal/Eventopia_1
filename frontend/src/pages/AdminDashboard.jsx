@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { approveEvent, rejectEvent } from '../services/eventService';
-import { getUser } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import '../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
-  const user = getUser();
+  const { user, loading: authLoading } = useAuth();
   const [pendingEvents, setPendingEvents] = useState([]);
   const [approvedEvents, setApprovedEvents] = useState([]);
   const [rejectedEvents, setRejectedEvents] = useState([]);
@@ -14,12 +14,14 @@ const AdminDashboard = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
-      window.location.href = '/';
-      return;
+    if (!authLoading) {
+      if (user?.role !== 'admin') {
+        window.location.href = '/';
+        return;
+      }
+      fetchAllEvents();
     }
-    fetchAllEvents();
-  }, []);
+  }, [user, authLoading]);
 
   const fetchAllEvents = async () => {
     setLoading(true);
@@ -128,7 +130,7 @@ const AdminDashboard = () => {
     </div>
   );
 
-  if (loading) {
+  if (loading || authLoading) {
     return <div className="loading-page">Loading admin dashboard...</div>;
   }
 

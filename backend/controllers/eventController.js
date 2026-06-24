@@ -1,6 +1,7 @@
 const Event = require('../models/Event');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
+const notificationService = require('../services/notificationService');
 
 // @desc    Get all events
 // @route   GET /api/events
@@ -51,6 +52,9 @@ exports.getEvent = async (req, res) => {
     if (!event) {
       return res.status(404).json({ success: false, message: 'Event not found' });
     }
+
+    // Increment view count
+    await Event.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
 
     res.status(200).json({
       success: true,
@@ -272,6 +276,11 @@ exports.approveEvent = async (req, res) => {
 
     event.status = 'approved';
     await event.save();
+
+    // ── Trigger notification pipeline (async, don't block response) ──
+    notificationService.notifyOnEventApproval(event).catch(err => {
+      console.error('[ApproveEvent] Notification pipeline error:', err);
+    });
 
     res.status(200).json({
       success: true,

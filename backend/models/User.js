@@ -38,11 +38,35 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event'
   }],
+
+  // ── Subscription Settings ──────────────────────────────────
+  subscriptions: {
+    institutes: { type: [String], default: [] },          // e.g. ["IIIT Surat", "IIT Bombay"]
+    institutionTypes: { type: [String], default: [] },     // e.g. ["IIT", "NIT", "IIIT"]
+    categories: { type: [String], default: [] },           // e.g. ["Hackathon", "Workshop"]
+    subscribeAllInstitutes: { type: Boolean, default: false }
+  },
+
+  // ── Notification Preferences ───────────────────────────────
+  notificationPreferences: {
+    emailEnabled: { type: Boolean, default: true },
+    inAppEnabled: { type: Boolean, default: true },
+    dailyDigest: { type: Boolean, default: false },
+    weeklyDigest: { type: Boolean, default: false },
+    instantAlerts: { type: Boolean, default: true }
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Indexes for efficient subscription matching
+userSchema.index({ 'subscriptions.institutes': 1 });
+userSchema.index({ 'subscriptions.institutionTypes': 1 });
+userSchema.index({ 'subscriptions.categories': 1 });
+userSchema.index({ 'subscriptions.subscribeAllInstitutes': 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

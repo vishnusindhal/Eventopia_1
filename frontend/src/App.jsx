@@ -7,7 +7,7 @@ import SubmitEvent from './pages/SubmitEvent';
 import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
 import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
+
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import About from './pages/About';
@@ -15,7 +15,12 @@ import IIIT from './pages/IIIT';
 import NIT from './pages/NIT';
 import IIT from './pages/IIT';
 import CollegePage from './pages/CollegePage';
+import NotificationCenter from './pages/NotificationCenter';
+import SubscriptionSettings from './pages/SubscriptionSettings';
+import NotificationSettings from './pages/NotificationSettings';
+import NotificationBell from './components/NotificationBell';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
 import './styles/App.css';
 
 const AppContent = () => {
@@ -41,8 +46,9 @@ const AppContent = () => {
               {user ? (
                 <>
                   <li><Link to="/profile">Profile</Link></li>
-                  <li><Link to="/dashboard">Dashboard</Link></li>
+
                   {isAdmin && <li><Link to="/admin" className="admin-link">Admin</Link></li>}
+                  <li><NotificationBell /></li>
                 </>
               ) : (
                 <li><Link to="/login" className="btn-login">Login</Link></li>
@@ -59,7 +65,7 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/about" element={<About />} />
@@ -71,6 +77,11 @@ const AppContent = () => {
           <Route path="/iiit/:collegeName" element={<CollegePage />} />
           <Route path="/nit/:collegeName" element={<CollegePage />} />
           <Route path="/iit/:collegeName" element={<CollegePage />} />
+
+          {/* ── New Routes ─────────────────────────────────────── */}
+          <Route path="/notifications" element={<NotificationCenter />} />
+          <Route path="/settings/subscriptions" element={<SubscriptionSettings />} />
+          <Route path="/settings/notifications" element={<NotificationSettings />} />
         </Routes>
 
         <footer className="footer">
@@ -83,11 +94,11 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <SocketProvider>
+        <AppContent />
+      </SocketProvider>
     </AuthProvider>
   );
-
-
 }
 
 export default App;

@@ -1,0 +1,383 @@
+/* ── Notification Center Page ─────────────────────────────────── */
+
+.nc-page {
+  min-height: calc(100vh - 160px);
+  background: #f8fafc;
+  padding: 32px 16px;
+}
+
+.nc-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.nc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nc-header-left h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.nc-count {
+  font-size: 14px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.nc-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+
+.nc-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nc-btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+}
+
+.nc-btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.nc-btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.nc-btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.nc-btn-danger {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.nc-btn-danger:hover {
+  background: #fee2e2;
+}
+
+/* ── Search & Filters ───────────────────────────────────────── */
+
+.nc-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.nc-search-form {
+  flex: 1;
+  min-width: 200px;
+}
+
+.nc-search-input-wrapper {
+  position: relative;
+}
+
+.nc-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+}
+
+.nc-search-input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.nc-search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.nc-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.nc-filter-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.nc-filter-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nc-filter-tab.active {
+  background: #fff;
+  color: #3b82f6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.nc-filter-tab:hover:not(.active) {
+  color: #1e293b;
+}
+
+/* ── Notification Items ─────────────────────────────────────── */
+
+.nc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #f1f5f9;
+}
+
+.nc-item:hover {
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.nc-item-unread {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03), rgba(139, 92, 246, 0.03));
+  border-left: 3px solid #3b82f6;
+}
+
+.nc-item-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 12px;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.nc-item-unread .nc-item-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+}
+
+.nc-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.nc-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.nc-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.nc-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  flex-shrink: 0;
+}
+
+.nc-item-message {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.nc-item-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.nc-item-time {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.nc-item-type {
+  font-size: 11px;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* ── Item Actions ───────────────────────────────────────────── */
+
+.nc-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.nc-item:hover .nc-item-actions {
+  opacity: 1;
+}
+
+.nc-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: #f1f5f9;
+  color: #64748b;
+  transition: all 0.15s;
+}
+
+.nc-action-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.nc-action-delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Empty / Loading States ─────────────────────────────────── */
+
+.nc-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.nc-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.nc-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: #fff;
+  border-radius: 16px;
+  border: 2px dashed #e2e8f0;
+}
+
+.nc-empty-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.nc-empty h3 {
+  color: #1e293b;
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.nc-empty p {
+  color: #94a3b8;
+  font-size: 14px;
+  margin: 0 0 20px;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Load More ──────────────────────────────────────────────── */
+
+.nc-load-more {
+  text-align: center;
+  padding: 16px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .nc-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nc-toolbar {
+    flex-direction: column;
+  }
+
+  .nc-item {
+    padding: 12px 14px;
+  }
+
+  .nc-item-actions {
+    opacity: 1;
+  }
+}

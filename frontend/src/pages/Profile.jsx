@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import EventCard from '../components/EventCard';
 import { getUserEvents, getRegisteredEvents, getUserStats } from '../services/userService';
 import { deleteEvent } from '../services/eventService';
-import { getUser, updateProfile, updatePassword } from '../services/authService';
+import { getUser, updateProfile, updatePassword, logout as apiLogout } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/Profile.css';
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const { logout: authLogout } = useAuth();
   const [user, setUser] = useState(null);
   const [myEvents, setMyEvents] = useState([]);
   const [registeredEvents, setRegisteredEvents] = useState([]);
@@ -145,6 +148,17 @@ const Profile = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await apiLogout();
+      await authLogout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      setMessage({ type: 'error', text: 'Logout failed' });
+    }
+  };
+
   if (loading) {
     return <div className="loading-page">Loading profile...</div>;
   }
@@ -154,13 +168,18 @@ const Profile = () => {
       <div className="profile-container">
         {/* Profile Header */}
         <div className="profile-header">
-          <div className="profile-avatar">
-            {user?.name?.charAt(0).toUpperCase()}
+          <div className="profile-info-section">
+            <div className="profile-avatar">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <div className="profile-header-info">
+              <h1>{user?.name}</h1>
+              <p className="profile-email">{user?.email}</p>
+              <p className="profile-college">{user?.college} • {user?.institutionType}</p>
+            </div>
           </div>
-          <div className="profile-header-info">
-            <h1>{user?.name}</h1>
-            <p className="profile-email">{user?.email}</p>
-            <p className="profile-college">{user?.college} • {user?.institutionType}</p>
+          <div className="profile-header-actions">
+            <button className="btn-logout" onClick={handleLogout}>Logout</button>
           </div>
         </div>
 
@@ -210,6 +229,12 @@ const Profile = () => {
             onClick={() => setActiveSection('registered')}
           >
             Registered Events ({registeredEvents.length})
+          </button>
+          <button
+            className={`profile-tab ${activeSection === 'subscriptions' ? 'active' : ''}`}
+            onClick={() => setActiveSection('subscriptions')}
+          >
+            Following & Alerts
           </button>
         </div>
 
@@ -410,6 +435,107 @@ const Profile = () => {
                   <Link to="/events" className="btn-primary">Browse Events</Link>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Following & Alerts Section */}
+          {activeSection === 'subscriptions' && (
+            <div className="profile-section">
+              <div className="section-header">
+                <h2>Following & Alert Preferences</h2>
+              </div>
+              
+              <div className="profile-subscriptions-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginTop: '1rem' }}>
+                {/* Following Summary Card */}
+                <div className="profile-sub-card" style={{ padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#ffffff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>📡 Following</h3>
+                  <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div>
+                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#64748b' }}>Institutes:</strong>
+                      {user?.subscriptions?.subscribeAllInstitutes ? (
+                        <span style={{ fontSize: '1rem', color: '#10b981', fontWeight: '600' }}>✓ Following All Institutes</span>
+                      ) : user?.subscriptions?.institutes?.length > 0 ? (
+                        <span style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
+                          {user.subscriptions.institutes.map(c => (
+                            <span key={c} style={{ background: '#f1f5f9', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem' }}>{c}</span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.95rem', color: '#94a3b8', fontStyle: 'italic' }}>Not following any institutes</span>
+                      )}
+                    </div>
+                    <div>
+                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#64748b' }}>Institution Types:</strong>
+                      {user?.subscriptions?.subscribeAllInstitutes ? (
+                        <span style={{ fontSize: '0.95rem', color: '#94a3b8' }}>All</span>
+                      ) : user?.subscriptions?.institutionTypes?.length > 0 ? (
+                        <span style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
+                          {user.subscriptions.institutionTypes.map(t => (
+                            <span key={t} style={{ background: '#e0e7ff', color: '#4f46e5', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: '500' }}>{t}</span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.95rem', color: '#94a3b8', fontStyle: 'italic' }}>No types selected</span>
+                      )}
+                    </div>
+                    <div>
+                      <strong style={{ display: 'block', fontSize: '0.9rem', color: '#64748b' }}>Event Categories:</strong>
+                      {user?.subscriptions?.categories?.length > 0 ? (
+                        <span style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem' }}>
+                          {user.subscriptions.categories.map(cat => (
+                            <span key={cat} style={{ background: '#fef3c7', color: '#d97706', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: '500' }}>{cat}</span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.95rem', color: '#64748b', fontStyle: 'italic' }}>All Categories (No filter)</span>
+                      )}
+                    </div>
+                  </div>
+                  <Link to="/settings/subscriptions" className="btn-edit" style={{ textAlign: 'center', display: 'block', width: '100%', boxSizing: 'border-box' }}>
+                    Manage Following
+                  </Link>
+                </div>
+
+                {/* Notification Preferences Card */}
+                <div className="profile-sub-card" style={{ padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#ffffff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>🔔 Preferences</h3>
+                  <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                      <span>In-App Notifications</span>
+                      <strong style={{ color: user?.notificationPreferences?.inAppEnabled !== false ? '#10b981' : '#ef4444' }}>
+                        {user?.notificationPreferences?.inAppEnabled !== false ? 'Enabled' : 'Disabled'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                      <span>Email Notifications</span>
+                      <strong style={{ color: user?.notificationPreferences?.emailEnabled !== false ? '#10b981' : '#ef4444' }}>
+                        {user?.notificationPreferences?.emailEnabled !== false ? 'Enabled' : 'Disabled'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                      <span>Instant Alerts</span>
+                      <strong style={{ color: user?.notificationPreferences?.instantAlerts !== false ? '#10b981' : '#ef4444' }}>
+                        {user?.notificationPreferences?.instantAlerts !== false ? 'Enabled' : 'Disabled'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                      <span>Daily Digest</span>
+                      <strong style={{ color: user?.notificationPreferences?.dailyDigest ? '#10b981' : '#64748b' }}>
+                        {user?.notificationPreferences?.dailyDigest ? 'Enabled' : 'Disabled'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem' }}>
+                      <span>Weekly Digest</span>
+                      <strong style={{ color: user?.notificationPreferences?.weeklyDigest ? '#10b981' : '#64748b' }}>
+                        {user?.notificationPreferences?.weeklyDigest ? 'Enabled' : 'Disabled'}
+                      </strong>
+                    </div>
+                  </div>
+                  <Link to="/settings/notifications" className="btn-edit" style={{ textAlign: 'center', display: 'block', width: '100%', boxSizing: 'border-box', background: '#6366f1' }}>
+                    Configure Preferences
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
         </div>

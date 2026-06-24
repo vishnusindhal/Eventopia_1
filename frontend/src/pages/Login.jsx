@@ -36,7 +36,7 @@ const Login = () => {
       if (response && (response.success || response.token || response.user)) {
         const token = response.token;
         await authLogin(token || response.user);
-        navigate('/dashboard');
+        navigate('/profile');
       } else {
         setError(response?.message || 'Login failed');
       }

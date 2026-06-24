@@ -12,6 +12,7 @@ export const register = async (userData) => {
     // If backend returned a token, set default Authorization header for subsequent requests
     if (response.data.token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      window.__eventopiaToken = response.data.token;
     }
     return response.data;
   } catch (error) {
@@ -30,6 +31,7 @@ export const login = async (credentials) => {
     // If backend returned a token, set default Authorization header for subsequent requests
     if (response.data.token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      window.__eventopiaToken = response.data.token;
     }
     return response.data;
   } catch (error) {
@@ -44,6 +46,7 @@ export const logout = async () => {
     currentUser = null;
     // Remove Authorization header on logout
     delete api.defaults.headers.common['Authorization'];
+    window.__eventopiaToken = '';
   } catch (error) {
     console.error('Logout error:', error);
   }

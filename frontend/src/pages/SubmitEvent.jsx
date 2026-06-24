@@ -52,7 +52,7 @@ const SubmitEvent = () => {
       setSubmitted(true);
 
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/profile');
       }, 2000);
 
     } catch (err) {

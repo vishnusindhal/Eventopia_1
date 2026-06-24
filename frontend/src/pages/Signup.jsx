@@ -48,7 +48,7 @@ const Signup = () => {
       const response = await register(userData);
       if (response.success) {
         await authLogin(response.token);
-        navigate('/dashboard');
+        navigate('/profile');
       } else {
         setError(response.message || 'Registration failed');
       }

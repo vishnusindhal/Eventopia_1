@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login, getUser } from '../services/authService';
+import { login, logout } from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/AdminLogin.css';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -27,16 +29,22 @@ const AdminLogin = () => {
     setError('');
     
     try {
-      await login(formData);
-      const user = getUser();
+      const response = await login(formData);
       
-      // Check if user is admin
-      if (user?.role === 'admin') {
-        navigate('/admin');
+      if (response && response.user) {
+        // Check if user is admin
+        if (response.user.role === 'admin') {
+          const token = response.token;
+          await authLogin(token || response.user);
+          navigate('/admin');
+        } else {
+          setError('Access denied. This account is not an admin account.');
+          await logout();
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
       } else {
-        setError('Access denied. This account is not an admin account.');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        setError('Login failed. No user data returned.');
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
