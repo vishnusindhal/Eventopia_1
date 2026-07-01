@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { approveEvent, rejectEvent } from '../services/eventService';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
-import '../styles/AdminDashboard.css';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -73,175 +75,188 @@ const AdminDashboard = () => {
   };
 
   const EventCard = ({ event, showActions = false }) => (
-    <div className="admin-event-card">
-      <div className="admin-event-header">
-        <span className={`admin-event-type ${event.type.toLowerCase()}`}>
-          {event.type}
-        </span>
-        <span className="admin-event-date">{formatDate(event.date)}</span>
-      </div>
-      
-      <h3 className="admin-event-title">{event.title}</h3>
-      <p className="admin-event-description">{event.description}</p>
-      
-      <div className="admin-event-details">
-        <div className="detail-row">
-          <span className="detail-label">College:</span>
-          <span className="detail-value">{event.college}</span>
+    <Card className="flex flex-col h-full border-t-4 border-t-slate-800 dark:border-t-slate-300">
+      <div className="p-5 flex-grow">
+        <div className="flex justify-between items-start mb-3">
+          <Badge variant="primary" className="uppercase text-xs">{event.type}</Badge>
+          <span className="text-xs font-semibold text-slate-500">{formatDate(event.date)}</span>
         </div>
-        <div className="detail-row">
-          <span className="detail-label">Institution:</span>
-          <span className="detail-value">{event.institutionType}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Venue:</span>
-          <span className="detail-value">{event.venue}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Organizer:</span>
-          <span className="detail-value">{event.organizer}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Contact:</span>
-          <span className="detail-value">{event.contact}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Submitted by:</span>
-          <span className="detail-value">{event.createdBy?.name || 'Unknown'}</span>
+        
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 leading-tight">
+          {event.title}
+        </h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-3">
+          {event.description}
+        </p>
+        
+        <div className="space-y-2 text-sm bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+          <div className="flex justify-between">
+            <span className="text-slate-500 font-medium">College:</span>
+            <span className="text-slate-900 dark:text-slate-100 font-semibold text-right max-w-[60%] truncate">{event.college}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 font-medium">Inst. Type:</span>
+            <span className="text-slate-900 dark:text-slate-100 font-semibold">{event.institutionType}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 font-medium">Venue:</span>
+            <span className="text-slate-900 dark:text-slate-100 font-semibold text-right max-w-[60%] truncate">{event.venue}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 font-medium">Organizer:</span>
+            <span className="text-slate-900 dark:text-slate-100 font-semibold text-right max-w-[60%] truncate">{event.organizer}</span>
+          </div>
+          <div className="flex justify-between border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
+            <span className="text-slate-500 font-medium">Submitter:</span>
+            <span className="text-slate-900 dark:text-slate-100 font-semibold truncate">{event.createdBy?.name || 'Unknown'}</span>
+          </div>
         </div>
       </div>
 
       {showActions && (
-        <div className="admin-event-actions">
-          <button 
-            className="btn-approve"
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex gap-3">
+          <Button 
+            className="flex-1 bg-success hover:bg-success/90 text-white"
             onClick={() => handleApprove(event._id)}
           >
             ✓ Approve
-          </button>
-          <button 
-            className="btn-reject"
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex-1 border-danger text-danger hover:bg-danger/10"
             onClick={() => handleReject(event._id)}
           >
             ✗ Reject
-          </button>
+          </Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 
   if (loading || authLoading) {
-    return <div className="loading-page">Loading admin dashboard...</div>;
+    return (
+      <div className="flex h-[60vh] w-full items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-slate-900 dark:border-white"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="admin-dashboard">
-      <div className="admin-container">
-        <div className="admin-header">
-          <h1>Admin Dashboard</h1>
-          <p>Manage and approve events</p>
+    <div className="animate-in fade-in duration-300 max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <span className="p-2 bg-slate-900 dark:bg-slate-100 rounded-lg text-white dark:text-slate-900 text-xl">🛡️</span>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Admin Dashboard</h1>
+          </div>
+          <p className="text-slate-500 font-medium ml-12">Manage and moderate platform events</p>
         </div>
+      </div>
 
-        {message.text && (
-          <div className={`admin-message ${message.type}`}>
-            {message.text}
+      {message.text && (
+        <div className={`mb-6 p-4 rounded-md flex items-center ${message.type === 'error' ? 'bg-danger/10 text-danger border border-danger/20' : 'bg-success/10 text-success border border-success/20'}`}>
+          <span className="font-medium">{message.text}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-warning">
+          <span className="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Pending</span>
+          <span className="text-3xl font-black text-slate-900 dark:text-slate-100">{pendingEvents.length}</span>
+        </Card>
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-success">
+          <span className="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Approved</span>
+          <span className="text-3xl font-black text-slate-900 dark:text-slate-100">{approvedEvents.length}</span>
+        </Card>
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-danger">
+          <span className="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Rejected</span>
+          <span className="text-3xl font-black text-slate-900 dark:text-slate-100">{rejectedEvents.length}</span>
+        </Card>
+        <Card className="p-5 flex flex-col justify-center border-l-4 border-l-slate-800 dark:border-l-slate-400 bg-slate-50 dark:bg-slate-800/50">
+          <span className="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Total</span>
+          <span className="text-3xl font-black text-slate-900 dark:text-slate-100">
+            {pendingEvents.length + approvedEvents.length + rejectedEvents.length}
+          </span>
+        </Card>
+      </div>
+
+      <div className="flex overflow-x-auto gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <button
+          className={`px-4 py-2 font-medium text-sm whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'pending' ? 'text-slate-900 dark:text-white border-b-2 border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+          onClick={() => setActiveTab('pending')}
+        >
+          <span className="w-2 h-2 rounded-full bg-warning"></span>
+          Pending Approval
+          <span className="ml-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-0.5 px-2 rounded-full text-xs">{pendingEvents.length}</span>
+        </button>
+        <button
+          className={`px-4 py-2 font-medium text-sm whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'approved' ? 'text-slate-900 dark:text-white border-b-2 border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+          onClick={() => setActiveTab('approved')}
+        >
+          <span className="w-2 h-2 rounded-full bg-success"></span>
+          Approved
+          <span className="ml-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-0.5 px-2 rounded-full text-xs">{approvedEvents.length}</span>
+        </button>
+        <button
+          className={`px-4 py-2 font-medium text-sm whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'rejected' ? 'text-slate-900 dark:text-white border-b-2 border-slate-900 dark:border-white bg-slate-100 dark:bg-slate-800' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+          onClick={() => setActiveTab('rejected')}
+        >
+          <span className="w-2 h-2 rounded-full bg-danger"></span>
+          Rejected
+          <span className="ml-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-0.5 px-2 rounded-full text-xs">{rejectedEvents.length}</span>
+        </button>
+      </div>
+
+      <div className="min-h-[400px]">
+        {activeTab === 'pending' && (
+          <div className="animate-in fade-in duration-300">
+            {pendingEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {pendingEvents.map(event => (
+                  <EventCard key={event._id} event={event} showActions={true} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-surface dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl">
+                <div className="text-5xl mb-4 opacity-50">🎉</div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">All caught up!</h3>
+                <p className="text-slate-500">There are no pending events to review.</p>
+              </div>
+            )}
           </div>
         )}
 
-        <div className="admin-stats">
-          <div className="admin-stat-card">
-            <div className="stat-number">{pendingEvents.length}</div>
-            <div className="stat-label">Pending Approval</div>
+        {activeTab === 'approved' && (
+          <div className="animate-in fade-in duration-300">
+            {approvedEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {approvedEvents.map(event => (
+                  <EventCard key={event._id} event={event} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-surface dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl">
+                <p className="text-slate-500">No approved events yet.</p>
+              </div>
+            )}
           </div>
-          <div className="admin-stat-card">
-            <div className="stat-number">{approvedEvents.length}</div>
-            <div className="stat-label">Approved Events</div>
+        )}
+
+        {activeTab === 'rejected' && (
+          <div className="animate-in fade-in duration-300">
+            {rejectedEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {rejectedEvents.map(event => (
+                  <EventCard key={event._id} event={event} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-surface dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl">
+                <p className="text-slate-500">No rejected events.</p>
+              </div>
+            )}
           </div>
-          <div className="admin-stat-card">
-            <div className="stat-number">{rejectedEvents.length}</div>
-            <div className="stat-label">Rejected Events</div>
-          </div>
-          <div className="admin-stat-card">
-            <div className="stat-number">
-              {pendingEvents.length + approvedEvents.length + rejectedEvents.length}
-            </div>
-            <div className="stat-label">Total Events</div>
-          </div>
-        </div>
-
-        <div className="admin-tabs">
-          <button
-            className={`admin-tab ${activeTab === 'pending' ? 'active' : ''}`}
-            onClick={() => setActiveTab('pending')}
-          >
-            Pending ({pendingEvents.length})
-          </button>
-          <button
-            className={`admin-tab ${activeTab === 'approved' ? 'active' : ''}`}
-            onClick={() => setActiveTab('approved')}
-          >
-            Approved ({approvedEvents.length})
-          </button>
-          <button
-            className={`admin-tab ${activeTab === 'rejected' ? 'active' : ''}`}
-            onClick={() => setActiveTab('rejected')}
-          >
-            Rejected ({rejectedEvents.length})
-          </button>
-        </div>
-
-        <div className="admin-content">
-          {activeTab === 'pending' && (
-            <div className="admin-section">
-              <h2>Events Pending Approval</h2>
-              {pendingEvents.length > 0 ? (
-                <div className="admin-events-grid">
-                  {pendingEvents.map(event => (
-                    <EventCard key={event._id} event={event} showActions={true} />
-                  ))}
-                </div>
-              ) : (
-                <div className="admin-empty-state">
-                  <p>No pending events to review</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'approved' && (
-            <div className="admin-section">
-              <h2>Approved Events</h2>
-              {approvedEvents.length > 0 ? (
-                <div className="admin-events-grid">
-                  {approvedEvents.map(event => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <div className="admin-empty-state">
-                  <p>No approved events yet</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'rejected' && (
-            <div className="admin-section">
-              <h2>Rejected Events</h2>
-              {rejectedEvents.length > 0 ? (
-                <div className="admin-events-grid">
-                  {rejectedEvents.map(event => (
-                    <EventCard key={event._id} event={event} />
-                  ))}
-                </div>
-              ) : (
-                <div className="admin-empty-state">
-                  <p>No rejected events</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

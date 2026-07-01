@@ -23,8 +23,9 @@ Eventopia is a simple event discovery and management platform for college events
 - Browse events by college or institution type (IIT / NIT / IIIT)
 - Admin approval workflow for submitted events
 - Register / unregister for events
-- User profile and basic stats
+- Unified User Profile (Manage personal info, submitted events, and registrations)
 ![User Profile](images/Profile.png)
+- **Following & Alerts System:** Follow specific institutes or categories to receive real-time in-app notifications and email alerts when new events are approved.
 
 ## Tech Stack
 
@@ -61,6 +62,12 @@ JWT_SECRET=your_jwt_secret_here
 JWT_EXPIRE=30d
 CLIENT_URL=http://localhost:5173
 NODE_ENV=development
+
+# Email Configuration (for Nodemailer alerts)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
 ```
 
 - `MONGODB_URI`: MongoDB connection string
@@ -68,6 +75,7 @@ NODE_ENV=development
 - `JWT_EXPIRE`: Token expiration (e.g. `30d`)
 - `CLIENT_URL` or `CORS_ORIGIN`: Frontend origin(s) for CORS (comma-separated)
 - `PORT`: Backend port (defaults to `5000`)
+- `EMAIL_*`: Credentials for Nodemailer (use an App Password for Gmail)
 
 ## Running Locally (Windows PowerShell)
 
@@ -120,6 +128,13 @@ Base: `/api`
 	- `GET /api/users/events` - Get events submitted by the user (requires auth)
 	- `GET /api/users/registered-events` - Get user's registered events (requires auth)
 	- `GET /api/users/stats` - Get user statistics (requires auth)
+
+- Subscriptions & Notifications
+	- `GET /api/subscriptions` - Get user's following preferences
+	- `POST /api/subscriptions/update` - Update following preferences
+	- `GET /api/notifications` - Get user's in-app notifications
+	- `PUT /api/notifications/:id/read` - Mark a notification as read
+	- `PUT /api/notifications/read-all` - Mark all as read
 
 ## Contributing
 

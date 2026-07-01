@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import EventCard from '../components/EventCard';
 import { getEventsByCollege } from '../services/eventService';
-import '../styles/CollegePage.css';
+import { Button } from '../components/ui/Button';
 
 const CollegePage = () => {
-  const { institutionType, collegeName } = useParams();
+  const { collegeName } = useParams();
+  const location = useLocation();
+  const resolvedInstitutionType = location.pathname.split('/')[1] || '';
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const UPPERCASE_WORDS = ['iit', 'nit', 'iiit', 'bhu'];
+
   const formatCollegeName = (slug) => {
-    // We already know collegeName exists here because it's a route param,
-    // but the slug could potentially be empty, so we keep the check simple.
     if (!slug) return '';
     return slug
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map(word => {
+        if (UPPERCASE_WORDS.includes(word.toLowerCase())) {
+          return word.toUpperCase();
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
       .join(' ');
   };
 
@@ -56,61 +63,78 @@ const CollegePage = () => {
   };
 
   return (
-    <div className="college-page">
-      <div className="college-page-header">
-        {/* Safe navigation: check institutionType before calling toUpperCase() */}
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-300">
+      <div className="mb-10 text-center relative pt-8 pb-4">
         <Link 
-          to={`/${institutionType || ''}`} 
-          className="back-button"
+          to={`/${resolvedInstitutionType || ''}`} 
+          className="absolute left-0 top-0 inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors bg-slate-100 dark:bg-slate-800/50 px-3 py-1.5 rounded-full"
         >
-          ← Back to {institutionType ? `${institutionType.toUpperCase()}s` : 'List'}
+          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to {resolvedInstitutionType ? `${resolvedInstitutionType.toUpperCase()}s` : 'List'}
         </Link>
-        <h1>{displayName}</h1>
-        <p>Upcoming events and activities</p>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-slate-100 mb-4 tracking-tight mt-6 sm:mt-0">
+          {displayName}
+        </h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          Upcoming events and activities
+        </p>
       </div>
 
-      <div className="college-page-content">
+      <div className="min-h-[400px]">
         {loading ? (
-          <div className="loading">
-            <div className="loading-spinner"></div>
-            <p>Loading events...</p>
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+            <p className="text-slate-500 font-medium">Loading events...</p>
           </div>
         ) : error ? (
-          <div className="error-state">
-            <div className="error-icon">⚠️</div>
-            <h3>Oops! Something went wrong</h3>
-            <p>{error}</p>
-            <button onClick={fetchCollegeEvents} className="retry-button">
+          <div className="bg-danger/5 border border-danger/20 rounded-xl p-8 max-w-lg mx-auto text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h3 className="text-xl font-bold text-danger mb-2">Oops! Something went wrong</h3>
+            <p className="text-danger/80 mb-6">{error}</p>
+            <Button onClick={fetchCollegeEvents} variant="outline" className="border-danger text-danger hover:bg-danger/10">
               Try Again
-            </button>
+            </Button>
           </div>
         ) : events.length > 0 ? (
-          <>
-            <div className="events-count">
-              <h2>Upcoming Events ({events.length})</h2>
-              <p className="events-subtitle">All approved events at {displayName}</p>
+          <div className="animate-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-6 border-b border-slate-200 dark:border-slate-800 pb-4 gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  Upcoming Events 
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm py-0.5 px-2.5 rounded-full">
+                    {events.length}
+                  </span>
+                </h2>
+                <p className="text-slate-500 text-sm mt-1">All approved events at {displayName}</p>
+              </div>
             </div>
-            <div className="events-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {events.map((event) => (
                 <EventCard key={event._id} event={event} />
               ))}
             </div>
-          </>
+          </div>
         ) : (
-          <div className="no-events-message">
-            <div className="empty-icon">📅</div>
-            <h3>No Events Yet</h3>
-            <p>There are no approved events scheduled for {displayName} at the moment.</p>
-            <div className="empty-actions">
-              <Link to="/submit" className="btn-submit">
+          <div className="bg-surface dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-2xl p-10 max-w-2xl mx-auto text-center shadow-sm">
+            <div className="text-6xl mb-6 opacity-80">📅</div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">No Events Yet</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto">
+              There are no approved events scheduled for {displayName} at the moment. Be the first to add one!
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+              <Button as={Link} to="/submit" className="w-full sm:w-auto">
                 📝 Submit an Event
-              </Link>
-              <Link to="/events" className="btn-browse">
+              </Button>
+              <Button as={Link} to="/events" variant="outline" className="w-full sm:w-auto">
                 🔍 Browse All Events
-              </Link>
+              </Button>
             </div>
-            <div className="empty-note">
-              <p>💡 <strong>Note:</strong> Submitted events appear here after admin approval.</p>
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 inline-block">
+              <p className="text-sm text-slate-500 flex items-center justify-center gap-2">
+                💡 <strong>Note:</strong> Submitted events appear here after admin approval.
+              </p>
             </div>
           </div>
         )}

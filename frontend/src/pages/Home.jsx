@@ -1,190 +1,281 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import '../styles/Home.css';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 const Home = () => {
-  const institutions = [
-    {
-      type: 'IIITs',
-      path: '/iiit',
-      description: 'Indian Institutes of Information Technology',
-      count: '12+ Institutes',
-      icon: '🎓',
-      color: 'blue'
-    },
-    {
-      type: 'NITs',
-      path: '/nit',
-      description: 'National Institutes of Technology',
-      count: '31+ Institutes',
-      icon: '🏛️',
-      color: 'purple'
-    },
-    {
-      type: 'IITs',
-      path: '/iit',
-      description: 'Indian Institutes of Technology',
-      count: '23+ Institutes',
-      icon: '🎯',
-      color: 'red'
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/events?search=${encodeURIComponent(searchQuery.trim())}`);
     }
+  };
+
+  const popularSearches = ['Hackathons', 'Workshops', 'AI', 'Web Dev', 'ML', 'Cyber Security'];
+
+  const categories = [
+    { name: 'Hackathons', icon: '💻', color: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300' },
+    { name: 'Coding Contest', icon: '🏆', color: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300' },
+    { name: 'Workshops', icon: '🔧', color: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300' },
+    { name: 'Conferences', icon: '🎤', color: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300' },
+    { name: 'Seminars', icon: '📖', color: 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300' },
+    { name: 'Bootcamps', icon: '🚀', color: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-300' },
+    { name: 'AI', icon: '🤖', color: 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300' },
+    { name: 'Cloud Computing', icon: '☁️', color: 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300' },
+    { name: 'Cyber Security', icon: '🔒', color: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300' },
+    { name: 'Data Science', icon: '📊', color: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300' },
+    { name: 'Web Development', icon: '🌐', color: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300' },
+    { name: 'Robotics', icon: '🤖', color: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300' },
   ];
 
-  const features = [
-    {
-      icon: '🔍',
-      title: 'Easy Discovery',
-      description: 'Find events from top institutions in one place'
-    },
-    {
-      icon: '📅',
-      title: 'Stay Updated',
-      description: 'Never miss out on exciting opportunities'
-    },
-    {
-      icon: '🎉',
-      title: 'Join Events',
-      description: 'Register for events with a single click'
-    },
-    {
-      icon: '🚀',
-      title: 'Submit Events',
-      description: 'Share your events with thousands of students'
-    }
+  const trendingColleges = [
+    { name: 'IIT Bombay', events: 132, followers: '15.1K', path: '/iit', type: 'IIT' },
+    { name: 'IIT Hyderabad', events: 98, followers: '10.5K', path: '/iit', type: 'IIT' },
+    { name: 'NIT Trichy', events: 85, followers: '8.2K', path: '/nit', type: 'NIT' },
+    { name: 'IIIT Surat', events: 45, followers: '4.8K', path: '/iiit', type: 'IIIT' },
+    { name: 'IIT Delhi', events: 120, followers: '18.5K', path: '/iit', type: 'IIT' },
+    { name: 'NIT Warangal', events: 72, followers: '6.2K', path: '/nit', type: 'NIT' },
+  ];
+
+  const stats = [
+    { value: '1000+', label: 'Events', icon: '📅' },
+    { value: '250+', label: 'Colleges', icon: '🏫' },
+    { value: '50K+', label: 'Students', icon: '👥' },
+    { value: '25+', label: 'Categories', icon: '📂' },
   ];
 
   return (
-    <div className="home-container">
+    <div className="flex flex-col animate-in fade-in duration-500">
+      
       {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-content">
-          <div className="hero-badge">
-            <span className="badge-text">✨ Welcome to Eventopia</span>
-          </div>
-          <h1 className="hero-title">
-            Discover Amazing Events
-            <span className="gradient-text"> Across Premier Institutes</span>
-          </h1>
-          <p className="hero-description">
-            Your gateway to technical competitions, cultural festivals, workshops, 
-            and seminars at IIITs, NITs, and IITs across India
-          </p>
-          <div className="hero-buttons">
-            <Link to="/events" className="btn-primary-hero">
-              <span>Browse Events</span>
-              <span className="btn-arrow">→</span>
-            </Link>
-            <Link to="/submit" className="btn-secondary-hero">
-              <span>Submit Event</span>
-              <span className="btn-icon">📝</span>
-            </Link>
-          </div>
-        </div>
+      <section className="relative py-16 md:py-24 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-100 dark:bg-indigo-900/20 rounded-full blur-3xl -mr-48 -mt-48 opacity-60"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-100 dark:bg-blue-900/20 rounded-full blur-3xl -ml-32 -mb-32 opacity-60"></div>
         
-        {/* Floating Elements */}
-        <div className="floating-elements">
-          <div className="float-element float-1">🎓</div>
-          <div className="float-element float-2">🎨</div>
-          <div className="float-element float-3">💻</div>
-          <div className="float-element float-4">🎯</div>
-          <div className="float-element float-5">🏆</div>
-          <div className="float-element float-6">📚</div>
-        </div>
-      </section>
-
-      {/* Institutions Section */}
-      <section className="institutions-section">
-        <div className="section-header">
-          <h2 className="section-title">Browse by Institution</h2>
-          <p className="section-subtitle">Select an institution type to explore events</p>
-        </div>
-        
-        <div className="institutions-grid">
-          {institutions.map((institution, index) => (
-            <Link
-              key={institution.type}
-              to={institution.path}
-              className={`institution-card card-${institution.color}`}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className="card-glow"></div>
-              <div className="card-icon">{institution.icon}</div>
-              <h3 className="card-title">{institution.type}</h3>
-              <p className="card-description">{institution.description}</p>
-              <div className="card-footer">
-                <span className="card-count">{institution.count}</span>
-                <span className="card-arrow">→</span>
+        <div className="relative max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Text content */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-sm font-medium mb-6">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                India's Largest Engineering Events Platform
               </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+              
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 mb-6 leading-[1.1]">
+                Discover Every{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">
+                  Engineering Event
+                </span>{' '}
+                In India
+              </h1>
+              
+              <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-lg leading-relaxed">
+                Find hackathons, workshops, tech talks, fests and more happening in IITs, NITs, IIITs and top colleges across India.
+              </p>
+              
+              {/* Search Bar */}
+              <form onSubmit={handleSearch} className="flex gap-2 mb-5">
+                <div className="relative flex-1">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search events, colleges, technologies..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm shadow-sm"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-7 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors shadow-md shadow-indigo-500/25 flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Search
+                </button>
+              </form>
 
-      {/* Features Section */}
-      <section className="features-section">
-        <div className="section-header">
-          <h2 className="section-title">Why Choose Eventopia?</h2>
-          <p className="section-subtitle">Everything you need to discover and manage events</p>
-        </div>
-
-        <div className="features-grid">
-          {features.map((feature, index) => (
-            <div 
-              key={index} 
-              className="feature-card"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className="feature-icon">{feature.icon}</div>
-              <h3 className="feature-title">{feature.title}</h3>
-              <p className="feature-description">{feature.description}</p>
+              {/* Popular Searches */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-slate-500 font-medium">Popular Searches:</span>
+                {popularSearches.map(tag => (
+                  <Link
+                    key={tag}
+                    to={`/events?search=${encodeURIComponent(tag)}`}
+                    className="px-3 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                  >
+                    {tag}
+                  </Link>
+                ))}
+              </div>
             </div>
-          ))}
+
+            {/* Right: Decorative illustration area */}
+            <div className="hidden lg:flex justify-center items-center relative">
+              <div className="w-80 h-80 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl rotate-6 opacity-90 shadow-2xl shadow-indigo-500/30"></div>
+              <div className="absolute w-72 h-72 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-3xl -rotate-6 opacity-80 shadow-xl"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center text-white z-10">
+                  <div className="text-7xl mb-4">🎓</div>
+                  <p className="text-xl font-bold">Events Await</p>
+                  <p className="text-sm opacity-80">Explore & Register</p>
+                </div>
+              </div>
+              
+              {/* Floating cards */}
+              <div className="absolute -top-4 -left-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-3 flex items-center gap-3 animate-bounce-slow z-20 border border-slate-100 dark:border-slate-700">
+                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg flex items-center justify-center text-lg">🏆</div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">IIT Bombay</p>
+                  <p className="text-[10px] text-slate-500">24 May 2024</p>
+                </div>
+              </div>
+              
+              <div className="absolute -bottom-2 -right-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-3 flex items-center gap-3 z-20 border border-slate-100 dark:border-slate-700">
+                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg flex items-center justify-center text-lg">💡</div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Tech Talk</p>
+                  <p className="text-[10px] text-slate-500">NIT Trichy</p>
+                </div>
+              </div>
+
+              <div className="absolute top-1/2 -right-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-3 flex items-center gap-3 z-20 border border-slate-100 dark:border-slate-700">
+                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex items-center justify-center text-lg">🤖</div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">AI Workshop</p>
+                  <p className="text-[10px] text-slate-500">IIT Hyderabad</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">📊</div>
-            <h3 className="stat-number">500+</h3>
-            <p className="stat-label">Events Monthly</p>
+      {/* Stats Bar */}
+      <section className="bg-indigo-950 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {stats.map((stat, i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
+                <span className="text-3xl">{stat.icon}</span>
+                <h3 className="text-3xl md:text-4xl font-extrabold text-white">{stat.value}</h3>
+                <p className="text-sm font-medium text-indigo-300">{stat.label}</p>
+              </div>
+            ))}
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">🏫</div>
-            <h3 className="stat-number">50+</h3>
-            <p className="stat-label">Partner Institutes</p>
+        </div>
+      </section>
+
+      {/* Popular Categories */}
+      <section id="categories" className="py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 scroll-mt-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Popular Categories</h2>
+              <p className="text-slate-500 mt-1">Explore events by categories</p>
+            </div>
+            <Link to="/events" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+              View All
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </Link>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">👥</div>
-            <h3 className="stat-number">10K+</h3>
-            <p className="stat-label">Active Students</p>
+          
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+            {categories.map((cat) => (
+              <Link
+                key={cat.name}
+                to={`/events?search=${encodeURIComponent(cat.name)}`}
+                className="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200 hover:-translate-y-1"
+              >
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${cat.color} transition-transform group-hover:scale-110`}>
+                  {cat.icon}
+                </div>
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 text-center leading-tight">{cat.name}</span>
+              </Link>
+            ))}
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">🌟</div>
-            <h3 className="stat-number">100+</h3>
-            <p className="stat-label">Cities Covered</p>
+        </div>
+      </section>
+
+      {/* Trending Colleges */}
+      <section id="colleges" className="py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-800/30 scroll-mt-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Trending Colleges</h2>
+              <p className="text-slate-500 mt-1">Colleges with most active events</p>
+            </div>
+            <div className="flex gap-2">
+              <Link to="/iit" className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">View All →</Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trendingColleges.map((college) => (
+              <Card key={college.name} className="p-6 flex flex-col items-center text-center hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-200 hover:-translate-y-1">
+                {/* College avatar */}
+                <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-300 mb-4 border-2 border-indigo-200 dark:border-indigo-700">
+                  {college.name.charAt(0)}
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">{college.name}</h3>
+                <div className="flex items-center gap-4 text-xs text-slate-500 mb-4">
+                  <span>{college.events} Events</span>
+                  <span>•</span>
+                  <span>{college.followers} Followers</span>
+                </div>
+                <span className="inline-block px-3 py-0.5 text-[10px] font-bold uppercase rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 mb-4">
+                  {college.type}
+                </span>
+                <Link to={college.path}>
+                  <button className="px-6 py-2 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-300 font-semibold rounded-lg hover:bg-indigo-500 hover:text-white transition-all text-sm">
+                    Follow
+                  </button>
+                </Link>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="cta-section">
-        <div className="cta-content">
-          <h2 className="cta-title">Ready to Get Started?</h2>
-          <p className="cta-description">
-            Join thousands of students discovering amazing events every day
-          </p>
-          <div className="cta-buttons">
-            <Link to="/signup" className="btn-cta-primary">
-              Create Account
-            </Link>
-            <Link to="/events" className="btn-cta-secondary">
-              Explore Events
-            </Link>
+      <section className="py-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-indigo-950 text-white rounded-3xl overflow-hidden relative">
+            <div className="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
+            
+            <div className="relative z-10 p-10 md:p-16 text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Get Started?</h2>
+              <p className="text-lg text-indigo-200 mb-8 max-w-2xl mx-auto">
+                Join thousands of students discovering amazing technical events and hackathons every day.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/signup">
+                  <button className="px-8 py-3.5 bg-white text-indigo-900 font-semibold rounded-xl hover:bg-slate-100 transition-colors shadow-lg text-sm">
+                    Create Account
+                  </button>
+                </Link>
+                <Link to="/events">
+                  <button className="px-8 py-3.5 border-2 border-indigo-400 text-white font-semibold rounded-xl hover:bg-indigo-800 transition-colors text-sm">
+                    Browse Events
+                  </button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 };

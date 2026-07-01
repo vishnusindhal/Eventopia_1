@@ -21,7 +21,9 @@ exports.getEvents = async (req, res) => {
     if (search) {
       query.$or = [
         { title: new RegExp(search, 'i') },
-        { description: new RegExp(search, 'i') }
+        { description: new RegExp(search, 'i') },
+        { type: new RegExp(search, 'i') },
+        { college: new RegExp(search, 'i') }
       ];
     }
 
