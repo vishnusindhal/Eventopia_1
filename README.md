@@ -100,6 +100,69 @@ npm run dev
 
 The frontend development server uses Vite (default `http://localhost:5173`). Ensure `CLIENT_URL` or `CORS_ORIGIN` includes that origin for development.
 
+## Running with Docker Compose
+
+Ensure the entire application is portable and runs with a single command using Docker.
+
+### Prerequisites
+
+- **Docker Desktop** installed and running on your system.
+- **Docker Compose v2** (included with Docker Desktop).
+
+### Environment Setup
+
+1. Copy the root `.env.example` to a new root file named `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Adjust environment parameters if required (defaults are configured to work out-of-the-box for local testing).
+
+### Running the Application
+
+Start all services (MongoDB, Express Backend, Nginx-served Frontend, Redis, and Kafka):
+
+```bash
+docker compose up --build -d
+```
+
+- `--build`: Re-builds local docker images (first run or when backend/frontend code updates).
+- `-d`: Runs containers in detached background mode.
+
+### Ports and Access
+
+Once running, access services at:
+- **Frontend App**: `http://localhost:3000`
+- **Backend API**: `http://localhost:5000`
+- **MongoDB**: `localhost:27017`
+- **Redis (Placeholder)**: `localhost:6379`
+- **Kafka (Placeholder)**: `localhost:9092`
+
+### Checking Logs
+
+To view real-time logs from all containers:
+```bash
+docker compose logs -f
+```
+
+To view logs for a specific service:
+```bash
+docker compose logs -f backend
+```
+
+### Stopping Services
+
+Stop and preserve database volumes:
+```bash
+docker compose down
+```
+
+Stop and completely reset local volumes (clears MongoDB and Redis storage):
+```bash
+docker compose down -v
+```
+
+---
+
 ## API Endpoints (overview)
 
 Base: `/api`

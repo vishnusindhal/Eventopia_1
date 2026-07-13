@@ -20,6 +20,7 @@ import CollegePage from './pages/CollegePage';
 import NotificationCenter from './pages/NotificationCenter';
 import SubscriptionSettings from './pages/SubscriptionSettings';
 import NotificationSettings from './pages/NotificationSettings';
+import ParticipantManager from './pages/ParticipantManager';
 import NotificationBell from './components/NotificationBell';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
@@ -247,6 +248,7 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/events" element={<Events />} />
           <Route path="/event/:id" element={<EventDetails />} />
+          <Route path="/event/:id/participants" element={<ParticipantManager />} />
           <Route path="/submit" element={<SubmitEvent />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin-login" element={<AdminLogin />} />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import EventCard from '../components/EventCard';
 import { getUserEvents, getRegisteredEvents, getUserStats } from '../services/userService';
-import { deleteEvent, getAllEvents } from '../services/eventService';
+import { deleteEvent, getAllEvents, downloadParticipantPDF, downloadParticipantCSV } from '../services/eventService';
 import { getUser, updateProfile, updatePassword, logout as apiLogout } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { Input } from '../components/ui/Input';
@@ -21,6 +21,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [passwordMode, setPasswordMode] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(null);
+  const [downloadingCSV, setDownloadingCSV] = useState(null);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -351,16 +353,66 @@ const Profile = () => {
                   {myEvents.map(event => (
                     <div key={event._id} className="flex flex-col h-full">
                       <EventCard event={event} />
-                      <div className="mt-3 flex justify-between items-center bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 p-3.5 rounded-2xl shadow-sm">
-                        <Badge variant={event.status === 'approved' ? 'success' : event.status === 'rejected' ? 'danger' : 'warning'}>
-                          {event.status.toUpperCase()}
-                        </Badge>
-                        <button 
-                          onClick={() => handleDeleteEvent(event._id)} 
-                          className="px-3.5 py-1.5 border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 text-xs font-bold rounded-lg transition-colors"
-                        >
-                          Delete
-                        </button>
+                      <div className="mt-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl shadow-sm space-y-3">
+                        {/* Status + Registration Count */}
+                        <div className="flex justify-between items-center">
+                          <Badge variant={event.status === 'approved' ? 'success' : event.status === 'rejected' ? 'danger' : 'warning'}>
+                            {event.status.toUpperCase()}
+                          </Badge>
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            {event.registeredUsers?.length || 0} Registrations
+                          </span>
+                        </div>
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap gap-2">
+                          <Link to={`/event/${event._id}/participants`} className="flex-1 min-w-0">
+                            <button className="w-full px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                              Participants
+                            </button>
+                          </Link>
+                          <button
+                            onClick={async () => {
+                              setDownloadingPDF(event._id);
+                              try { await downloadParticipantPDF(event._id); }
+                              catch (err) { setMessage({ type: 'error', text: err.message || 'PDF download failed' }); }
+                              finally { setDownloadingPDF(null); }
+                            }}
+                            disabled={downloadingPDF === event._id}
+                            className="px-3 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                          >
+                            {downloadingPDF === event._id ? (
+                              <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            )}
+                            PDF
+                          </button>
+                          <button
+                            onClick={async () => {
+                              setDownloadingCSV(event._id);
+                              try { await downloadParticipantCSV(event._id); }
+                              catch (err) { setMessage({ type: 'error', text: err.message || 'CSV download failed' }); }
+                              finally { setDownloadingCSV(null); }
+                            }}
+                            disabled={downloadingCSV === event._id}
+                            className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                          >
+                            {downloadingCSV === event._id ? (
+                              <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            )}
+                            CSV
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteEvent(event._id)} 
+                            className="px-3 py-2 border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 text-xs font-bold rounded-lg transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

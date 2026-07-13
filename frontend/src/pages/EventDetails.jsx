@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getEventById, registerForEvent } from '../services/eventService';
+import { getEventById, registerForEvent, downloadParticipantPDF, downloadParticipantCSV } from '../services/eventService';
 import { isAuthenticated } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { Badge } from '../components/ui/Badge';
@@ -15,6 +15,8 @@ const EventDetails = () => {
   const [registering, setRegistering] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [downloadingCSV, setDownloadingCSV] = useState(false);
 
   useEffect(() => {
     fetchEventDetails();
@@ -101,12 +103,13 @@ const EventDetails = () => {
   const mode = isOnline ? 'Online' : 'Offline';
   const isRegistrationOpen = !event.registrationDeadline || new Date(event.registrationDeadline) > new Date();
   const isOwner = user && event.createdBy && (user.id === event.createdBy._id || user._id === event.createdBy._id);
+  const isOwnerOrAdmin = user && (user.role === 'admin' || (event.createdBy && (user.id === event.createdBy._id || user._id === event.createdBy._id)));
 
   const tabs = [
     { id: 'about', label: 'About' },
     ...(event.schedule?.length ? [{ id: 'timeline', label: 'Timeline' }] : []),
     ...(event.highlights?.length ? [{ id: 'highlights', label: 'Highlights' }] : []),
-    ...(isOwner ? [{ id: 'participants', label: 'Participants' }] : []),
+    ...(isOwnerOrAdmin ? [{ id: 'participants', label: 'Participants' }] : []),
   ];
 
   return (
@@ -246,11 +249,59 @@ const EventDetails = () => {
               </ul>
             )}
 
-            {activeTab === 'participants' && isOwner && (
+            {activeTab === 'participants' && isOwnerOrAdmin && (
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-slate-900 dark:text-slate-100">Registered Participants</h3>
-                  <Badge variant="primary">{event.registeredUsers?.length || 0}</Badge>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">Registered Participants</h3>
+                    <Badge variant="primary">{event.registeredUsers?.length || 0}</Badge>
+                  </div>
+                  {event.registeredUsers?.length > 0 && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          setDownloadingPDF(true);
+                          try {
+                            await downloadParticipantPDF(event._id);
+                          } catch (err) {
+                            alert(err.message || 'Failed to download PDF');
+                          } finally {
+                            setDownloadingPDF(false);
+                          }
+                        }}
+                        disabled={downloadingPDF}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                      >
+                        {downloadingPDF ? (
+                          <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        )}
+                        PDF
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setDownloadingCSV(true);
+                          try {
+                            await downloadParticipantCSV(event._id);
+                          } catch (err) {
+                            alert(err.message || 'Failed to download CSV');
+                          } finally {
+                            setDownloadingCSV(false);
+                          }
+                        }}
+                        disabled={downloadingCSV}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                      >
+                        {downloadingCSV ? (
+                          <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        )}
+                        CSV
+                      </button>
+                    </div>
+                  )}
                 </div>
                 {event.registeredUsers?.length > 0 ? (
                   <div className="grid gap-3 sm:grid-cols-2">

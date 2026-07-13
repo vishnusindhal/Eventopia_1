@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const eventController = require('../controllers/eventController');
+const exportController = require('../controllers/exportController');
 const { protect, authorize } = require('../middleware/auth');
 
 // @route   GET /api/events
@@ -68,5 +69,21 @@ router.put('/:id/approve', protect, authorize('admin'), eventController.approveE
 // @desc    Reject an event (Admin only)
 // @access  Private (Admin)
 router.put('/:id/reject', protect, authorize('admin'), eventController.rejectEvent);
+
+// ── Participant Management & Export Routes ─────────────────────────
+// @route   GET /api/events/:id/participants
+// @desc    Get paginated, searchable participant list
+// @access  Private (Event Owner or Admin)
+router.get('/:id/participants', protect, exportController.getEventParticipants);
+
+// @route   GET /api/events/:id/export/pdf
+// @desc    Download participant report as PDF
+// @access  Private (Event Owner or Admin)
+router.get('/:id/export/pdf', protect, exportController.exportParticipantsPDF);
+
+// @route   GET /api/events/:id/export/csv
+// @desc    Download participant data as CSV
+// @access  Private (Event Owner or Admin)
+router.get('/:id/export/csv', protect, exportController.exportParticipantsCSV);
 
 module.exports = router;

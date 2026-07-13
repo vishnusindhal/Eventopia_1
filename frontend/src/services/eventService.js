@@ -116,3 +116,78 @@ export const rejectEvent = async (eventId) => {
     throw error.response?.data || { message: 'Failed to reject event' };
   }
 };
+
+// ── Participant Management & Export ─────────────────────────────────
+
+// Get paginated participants for an event (Owner or Admin)
+export const getEventParticipants = async (eventId, params = {}) => {
+  try {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    if (params.search) query.append('search', params.search);
+    if (params.sortBy) query.append('sortBy', params.sortBy);
+    if (params.sortOrder) query.append('sortOrder', params.sortOrder);
+
+    const response = await api.get(`/events/${eventId}/participants?${query.toString()}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to fetch participants' };
+  }
+};
+
+// Download participant report as PDF (triggers browser download)
+export const downloadParticipantPDF = async (eventId) => {
+  try {
+    const response = await api.get(`/events/${eventId}/export/pdf`, {
+      responseType: 'blob',
+    });
+
+    // Extract filename from Content-Disposition header or use a default
+    const disposition = response.headers['content-disposition'];
+    let filename = 'Participants.pdf';
+    if (disposition) {
+      const match = disposition.match(/filename="?(.+?)"?$/);
+      if (match) filename = match[1];
+    }
+
+    // Create a temporary download link
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to download PDF' };
+  }
+};
+
+// Download participant data as CSV (triggers browser download)
+export const downloadParticipantCSV = async (eventId) => {
+  try {
+    const response = await api.get(`/events/${eventId}/export/csv`, {
+      responseType: 'blob',
+    });
+
+    const disposition = response.headers['content-disposition'];
+    let filename = 'Participants.csv';
+    if (disposition) {
+      const match = disposition.match(/filename="?(.+?)"?$/);
+      if (match) filename = match[1];
+    }
+
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to download CSV' };
+  }
+};

@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # ── MongoDB Service ───────────────────────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    container_name: eventopia-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - eventopia-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend Service ───────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eventopia-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/eventopia
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_change_in_production}
+      - JWT_EXPIRE=${JWT_EXPIRE:-7d}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000,http://localhost:5173}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USER=${EMAIL_USER:-}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
+    networks:
+      - eventopia-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  # ── Frontend Service ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:5000/api}
+    container_name: eventopia-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - eventopia-network
+    depends_on:
+      - backend
+
+  # ── Redis Service (Future Acceleration Placement) ───────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: eventopia-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eventopia-network
+
+  # ── Zookeeper Service (Kafka Coordination Placement) ──────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: eventopia-zookeeper
+    restart: unless-stopped
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - eventopia-network
+
+  # ── Kafka Service (Event Messaging Queue Placement) ────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: eventopia-kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - eventopia-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  eventopia-network:
+    driver: bridge
