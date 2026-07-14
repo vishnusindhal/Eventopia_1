@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Pass VITE_API_URL as build argument (Vite bakes env vars at build time)
-ARG VITE_API_URL=http://localhost:5000/api
+ARG VITE_API_URL=http://localhost/api
 ENV VITE_API_URL=$VITE_API_URL
 
 # Build the application for production

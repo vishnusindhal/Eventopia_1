@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  # ── Nginx Gateway (Single Public Entry Point) ────────────────────
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: eventopia-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - eventopia-network
+    depends_on:
+      - frontend
+      - backend
+
   # ── MongoDB Service ───────────────────────────────────────────────
   mongodb:
     image: mongo:7.0
@@ -18,22 +33,21 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Backend Service ───────────────────────────────────────────────
+  # ── Backend Service (Internal Only — proxied via Nginx) ──────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: eventopia-backend
     restart: unless-stopped
-    ports:
-      - "5000:5000"
+    # No host ports exposed — accessed only through Nginx gateway
     environment:
       - NODE_ENV=development
       - PORT=5000
       - MONGODB_URI=mongodb://mongodb:27017/eventopia
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_change_in_production}
       - JWT_EXPIRE=${JWT_EXPIRE:-7d}
-      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000,http://localhost:5173}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost}
       - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
       - EMAIL_PORT=${EMAIL_PORT:-587}
       - EMAIL_USER=${EMAIL_USER:-}
@@ -44,23 +58,22 @@ services:
       mongodb:
         condition: service_healthy
 
-  # ── Frontend Service ──────────────────────────────────────────────
+  # ── Frontend Service (Internal Only — proxied via Nginx) ─────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-http://localhost:5000/api}
+        - VITE_API_URL=${VITE_API_URL:-http://localhost/api}
     container_name: eventopia-frontend
     restart: unless-stopped
-    ports:
-      - "3000:80"
+    # No host ports exposed — accessed only through Nginx gateway
     networks:
       - eventopia-network
     depends_on:
       - backend
 
-  # ── Redis Service (Future Acceleration Placement) ───────────────
+  # ── Redis Service (Future — Placeholder) ─────────────────────────
   redis:
     image: redis:7.2-alpine
     container_name: eventopia-redis
@@ -72,7 +85,7 @@ services:
     networks:
       - eventopia-network
 
-  # ── Zookeeper Service (Kafka Coordination Placement) ──────────────
+  # ── Zookeeper Service (Future — Kafka Dependency) ────────────────
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: eventopia-zookeeper
@@ -85,7 +98,7 @@ services:
     networks:
       - eventopia-network
 
-  # ── Kafka Service (Event Messaging Queue Placement) ────────────────
+  # ── Kafka Service (Future — Placeholder) ─────────────────────────
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: eventopia-kafka

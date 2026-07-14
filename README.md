@@ -102,7 +102,19 @@ The frontend development server uses Vite (default `http://localhost:5173`). Ens
 
 ## Running with Docker Compose
 
-Ensure the entire application is portable and runs with a single command using Docker.
+The entire application runs behind an **Nginx reverse proxy** as a single entry point.
+
+```
+Browser (http://localhost)
+        │
+     Nginx Gateway (:80)
+        │
+ ┌──────┴──────┐
+ │             │
+Frontend    Backend (:5000)
+               │
+           MongoDB (:27017)
+```
 
 ### Prerequisites
 
@@ -115,51 +127,69 @@ Ensure the entire application is portable and runs with a single command using D
    ```bash
    cp .env.example .env
    ```
-2. Adjust environment parameters if required (defaults are configured to work out-of-the-box for local testing).
+2. Adjust environment parameters if required (defaults work out-of-the-box).
 
 ### Running the Application
 
-Start all services (MongoDB, Express Backend, Nginx-served Frontend, Redis, and Kafka):
+Start all services with a single command:
 
 ```bash
 docker compose up --build -d
 ```
 
-- `--build`: Re-builds local docker images (first run or when backend/frontend code updates).
+- `--build`: Re-builds images (first run or when code changes).
 - `-d`: Runs containers in detached background mode.
 
-### Ports and Access
+### Accessing the Application
 
-Once running, access services at:
-- **Frontend App**: `http://localhost:3000`
-- **Backend API**: `http://localhost:5000`
-- **MongoDB**: `localhost:27017`
-- **Redis (Placeholder)**: `localhost:6379`
-- **Kafka (Placeholder)**: `localhost:9092`
+Once running, access everything through the Nginx gateway:
+
+| URL | What it serves |
+|---|---|
+| `http://localhost` | React frontend (via Nginx → Frontend container) |
+| `http://localhost/api` | Express backend (via Nginx → Backend container) |
+| `localhost:27017` | MongoDB (direct — for dev tools like Compass) |
+
+> **Note:** Frontend and backend ports are NOT directly exposed to the host. All traffic flows through Nginx on port 80.
+
+### Nginx Features
+
+- **Reverse Proxy**: Routes `/api/*` to Express, everything else to React
+- **Gzip Compression**: Enabled for HTML, CSS, JS, JSON, SVG, fonts
+- **Security Headers**: `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Referrer-Policy`
+- **React Router Support**: Client-side routing works correctly on page refresh
+- **Upload Limit**: `client_max_body_size 10m` for future file uploads
+- **WebSocket Ready**: Commented Socket.IO proxy block ready for activation
 
 ### Checking Logs
 
-To view real-time logs from all containers:
 ```bash
+# All services
 docker compose logs -f
-```
 
-To view logs for a specific service:
-```bash
+# Specific service
+docker compose logs -f nginx
 docker compose logs -f backend
 ```
 
 ### Stopping Services
 
-Stop and preserve database volumes:
 ```bash
+# Stop and preserve database volumes
 docker compose down
-```
 
-Stop and completely reset local volumes (clears MongoDB and Redis storage):
-```bash
+# Stop and completely reset local volumes
 docker compose down -v
 ```
+
+### Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| `502 Bad Gateway` | Backend container may not be ready yet. Check: `docker compose logs backend` |
+| Frontend shows blank page | Rebuild frontend: `docker compose build frontend` |
+| API returns CORS errors | Verify `CLIENT_URL` in `.env` matches the origin (default: `http://localhost`) |
+| Port 80 already in use | Stop any local web servers, or change the nginx port mapping in `docker-compose.yml` |
 
 ---
 
