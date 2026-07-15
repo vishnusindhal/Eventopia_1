@@ -41,9 +41,17 @@ Eventopia is a simple event discovery and management platform for college events
 	- `routes/` - Express route modules (`auth`, `events`, `users`)
 	- `controllers/` - Route handlers and business logic
 	- `models/` - Mongoose models (`User`, `Event`)
+	- `services/` - Business services (`emailService`, `notificationService`, `cacheService`, `cronService`, `socketService`)
+	- `middleware/` - Express middleware (`cacheMiddleware`, `rateLimiter`, `auth`)
+	- `kafka/` - Kafka producer/consumer infrastructure
+		- `producers/` - Event and registration topic producers
+		- `consumers/` - Email, notification, and analytics consumer workers
+	- `config/` - Database and Redis configuration
 - `frontend/` - React + Vite application
 	- `src/` - React sources (components, pages, services)
+- `nginx/` - Nginx reverse proxy gateway configuration
 - `images/` - Add screenshots and other assets here
+- `.ai/` - AI Knowledge Base (decision log, progress, changelog)
 
 ## Prerequisites
 
@@ -285,6 +293,63 @@ Average response time measurements show significant improvement when caching is 
 | **User Stats** (`/stats`) | 95.0 ms | 2.1 ms | **~97% faster** |
 
 *Note: Database queries are reduced to zero on Redis cache hits.*
+
+---
+
+## Apache Kafka — Asynchronous Message Processing
+
+Eventopia uses **Apache Kafka** to decouple long-running background tasks (emails, notifications, analytics) from synchronous API responses. Controllers publish lightweight messages to Kafka topics after completing MongoDB writes, and dedicated consumer workers process them asynchronously.
+
+### Architecture
+
+```
+Student/Admin  →  Express API  →  MongoDB (write)
+                       │
+                       ↓
+                  Kafka Producer (fire-and-forget)
+                       │
+            ┌──────────┼──────────┐
+            ↓          ↓          ↓
+     Email Consumer  Notif Consumer  Analytics Consumer
+     (group: email)  (group: notif)  (group: analytics)
+```
+
+### Kafka Topics
+
+| Topic | Published When | Consumers |
+|---|---|---|
+| `event.created` | New event submitted | — |
+| `event.updated` | Event details edited | — |
+| `event.approved` | Admin approves event | Email, Notification, Analytics |
+| `event.rejected` | Admin rejects event | Email |
+| `registration.created` | Student registers for event | Email, Notification, Analytics |
+| `registration.cancelled` | Student unregisters | Notification, Analytics |
+| `notification.send` | Generic notification (future) | — |
+| `email.send` | Generic email (future) | — |
+
+### Consumer Responsibilities
+
+| Consumer | Group ID | Handles |
+|---|---|---|
+| **Email** | `eventopia-email-consumer` | Subscriber notification emails, rejection emails, registration confirmations |
+| **Notification** | `eventopia-notification-consumer` | Bulk in-app notifications, Socket.IO real-time events, Redis cache invalidation |
+| **Analytics** | `eventopia-analytics-consumer` | Subscriber count updates, structured registration/cancellation logs |
+
+### Retry & Error Handling
+
+- **Producer**: 5 retries with 1-second initial delay (KafkaJS built-in).
+- **Consumer**: 3 retries per message with exponential backoff (100ms → 400ms → 1600ms).
+- **Dead Letters**: After exhausting retries, failed messages are logged with structured JSON for debugging.
+- **Graceful Fallback**: If Kafka is unavailable, the API continues working normally — background tasks simply don't execute until Kafka recovers.
+
+### Kafka Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| `[Kafka Producer] Initial connection failed` | Kafka may not be ready yet (15-30s startup). The producer will retry automatically. |
+| `[Kafka Consumer:*] Failed to start` | Check Kafka container: `docker compose logs kafka` |
+| Consumers not receiving messages | Verify topics exist: `docker exec eventopia-kafka kafka-topics --bootstrap-server localhost:9092 --list` |
+| Kafka container keeps restarting | Check Zookeeper: `docker compose logs zookeeper` |
 
 ---
 

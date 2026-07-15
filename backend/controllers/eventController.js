@@ -1,8 +1,9 @@
 const Event = require('../models/Event');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
-const notificationService = require('../services/notificationService');
 const cacheService = require('../services/cacheService');
+const eventProducer = require('../kafka/producers/eventProducer');
+const registrationProducer = require('../kafka/producers/registrationProducer');
 
 // @desc    Get all events
 // @route   GET /api/events
@@ -130,6 +131,11 @@ exports.createEvent = async (req, res) => {
     // Invalidate caches (lists, college, institution, user stats)
     await cacheService.invalidateEventData(null, event.college, event.institutionType, req.user.id);
 
+    // Publish event.created to Kafka (fire-and-forget)
+    eventProducer.publishEventCreated(event, req.user.id).catch(err => {
+      console.error('[CreateEvent] Kafka publish error:', err.message);
+    });
+
     res.status(201).json({
       success: true,
       event
@@ -163,6 +169,11 @@ exports.updateEvent = async (req, res) => {
 
     // Invalidate event detail, list, college, and user stats cache
     await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
+
+    // Publish event.updated to Kafka (fire-and-forget)
+    eventProducer.publishEventUpdated(event, req.user.id).catch(err => {
+      console.error('[UpdateEvent] Kafka publish error:', err.message);
+    });
 
     res.status(200).json({
       success: true,
@@ -225,13 +236,20 @@ exports.registerForEvent = async (req, res) => {
     await event.save();
 
     // Add to user's registered events
-    await User.findByIdAndUpdate(req.user.id, {
+    const user = await User.findByIdAndUpdate(req.user.id, {
       $push: { registeredEvents: event._id }
-    });
+    }, { new: true }).select('name email');
 
     // Invalidate event cache, lists, and registering/creator stats
     await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
     await cacheService.invalidateUserStats(req.user.id);
+
+    // Publish registration.created to Kafka (fire-and-forget)
+    registrationProducer.publishRegistrationCreated(
+      event, req.user.id, user?.name, user?.email
+    ).catch(err => {
+      console.error('[RegisterEvent] Kafka publish error:', err.message);
+    });
 
     res.status(200).json({
       success: true,
@@ -265,13 +283,20 @@ exports.unregisterFromEvent = async (req, res) => {
     await event.save();
 
     // Remove from user's registered events
-    await User.findByIdAndUpdate(req.user.id, {
+    const user = await User.findByIdAndUpdate(req.user.id, {
       $pull: { registeredEvents: event._id }
-    });
+    }, { new: true }).select('name');
 
     // Invalidate cache
     await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
     await cacheService.invalidateUserStats(req.user.id);
+
+    // Publish registration.cancelled to Kafka (fire-and-forget)
+    registrationProducer.publishRegistrationCancelled(
+      event, req.user.id, user?.name
+    ).catch(err => {
+      console.error('[UnregisterEvent] Kafka publish error:', err.message);
+    });
 
     res.status(200).json({
       success: true,
@@ -300,9 +325,11 @@ exports.approveEvent = async (req, res) => {
     // Invalidate cache
     await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
 
-    // ── Trigger notification pipeline (async, don't block response) ──
-    notificationService.notifyOnEventApproval(event).catch(err => {
-      console.error('[ApproveEvent] Notification pipeline error:', err);
+    // ── Publish event.approved to Kafka ──
+    // Replaces the inline notificationService.notifyOnEventApproval() call.
+    // Email, notification, and analytics consumers process this asynchronously.
+    eventProducer.publishEventApproved(event).catch(err => {
+      console.error('[ApproveEvent] Kafka publish error:', err.message);
     });
 
     res.status(200).json({
@@ -332,6 +359,11 @@ exports.rejectEvent = async (req, res) => {
 
     // Invalidate cache
     await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
+
+    // Publish event.rejected to Kafka (fire-and-forget)
+    eventProducer.publishEventRejected(event).catch(err => {
+      console.error('[RejectEvent] Kafka publish error:', err.message);
+    });
 
     res.status(200).json({
       success: true,

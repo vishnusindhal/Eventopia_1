@@ -46,6 +46,8 @@ services:
       - PORT=5000
       - MONGODB_URI=mongodb://mongodb:27017/eventopia
       - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_CLIENT_ID=eventopia-backend
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here_change_in_production}
       - JWT_EXPIRE=${JWT_EXPIRE:-7d}
       - CLIENT_URL=${CLIENT_URL:-http://localhost}
@@ -59,6 +61,8 @@ services:
       mongodb:
         condition: service_healthy
       redis:
+        condition: service_started
+      kafka:
         condition: service_started
 
   # ── Frontend Service (Internal Only — proxied via Nginx) ─────────
@@ -88,7 +92,7 @@ services:
     networks:
       - eventopia-network
 
-  # ── Zookeeper Service (Future — Kafka Dependency) ────────────────
+  # ── Zookeeper Service (Kafka Dependency) ──────────────────────
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: eventopia-zookeeper
@@ -101,7 +105,7 @@ services:
     networks:
       - eventopia-network
 
-  # ── Kafka Service (Future — Placeholder) ─────────────────────────
+  # ── Kafka Service (Message Broker) ───────────────────────────
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: eventopia-kafka
@@ -118,6 +122,13 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - eventopia-network
 

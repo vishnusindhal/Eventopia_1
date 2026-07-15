@@ -5,11 +5,15 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 const { initRedis } = require('./config/redis');
+const { initKafka, shutdownKafka } = require('./kafka');
 
 dotenv.config();
 
 // Initialize Redis Client
 initRedis();
+
+// Initialize Kafka Producer & Consumers (non-blocking)
+initKafka();
 
 // Startup info to help diagnose deployment issues (safe-to-print items only)
 console.log('NODE_ENV=', process.env.NODE_ENV || 'not-set');
@@ -25,6 +29,19 @@ process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
     // optional: exit process to allow platform to restart
     // process.exit(1);
+});
+
+// Graceful shutdown hooks for Kafka
+process.on('SIGTERM', async () => {
+    console.log('[Server] SIGTERM received — shutting down gracefully...');
+    await shutdownKafka();
+    process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+    console.log('[Server] SIGINT received — shutting down gracefully...');
+    await shutdownKafka();
+    process.exit(0);
 });
 
 // --- CORS Configuration ---
