@@ -4,8 +4,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const { initRedis } = require('./config/redis');
 
 dotenv.config();
+
+// Initialize Redis Client
+initRedis();
 
 // Startup info to help diagnose deployment issues (safe-to-print items only)
 console.log('NODE_ENV=', process.env.NODE_ENV || 'not-set');

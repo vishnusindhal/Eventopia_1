@@ -2,6 +2,7 @@ const Event = require('../models/Event');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const notificationService = require('../services/notificationService');
+const cacheService = require('../services/cacheService');
 
 // @desc    Get all events
 // @route   GET /api/events
@@ -126,6 +127,9 @@ exports.createEvent = async (req, res) => {
     
     const event = await Event.create(req.body);
 
+    // Invalidate caches (lists, college, institution, user stats)
+    await cacheService.invalidateEventData(null, event.college, event.institutionType, req.user.id);
+
     res.status(201).json({
       success: true,
       event
@@ -157,6 +161,9 @@ exports.updateEvent = async (req, res) => {
       runValidators: true
     });
 
+    // Invalidate event detail, list, college, and user stats cache
+    await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
+
     res.status(200).json({
       success: true,
       event
@@ -184,6 +191,9 @@ exports.deleteEvent = async (req, res) => {
     }
 
     await event.deleteOne();
+
+    // Invalidate event, lists, college, and user stats cache
+    await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
 
     res.status(200).json({
       success: true,
@@ -218,6 +228,10 @@ exports.registerForEvent = async (req, res) => {
     await User.findByIdAndUpdate(req.user.id, {
       $push: { registeredEvents: event._id }
     });
+
+    // Invalidate event cache, lists, and registering/creator stats
+    await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
+    await cacheService.invalidateUserStats(req.user.id);
 
     res.status(200).json({
       success: true,
@@ -255,6 +269,10 @@ exports.unregisterFromEvent = async (req, res) => {
       $pull: { registeredEvents: event._id }
     });
 
+    // Invalidate cache
+    await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
+    await cacheService.invalidateUserStats(req.user.id);
+
     res.status(200).json({
       success: true,
       message: 'Successfully unregistered from event'
@@ -278,6 +296,9 @@ exports.approveEvent = async (req, res) => {
 
     event.status = 'approved';
     await event.save();
+
+    // Invalidate cache
+    await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
 
     // ── Trigger notification pipeline (async, don't block response) ──
     notificationService.notifyOnEventApproval(event).catch(err => {
@@ -308,6 +329,9 @@ exports.rejectEvent = async (req, res) => {
 
     event.status = 'rejected';
     await event.save();
+
+    // Invalidate cache
+    await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
 
     res.status(200).json({
       success: true,

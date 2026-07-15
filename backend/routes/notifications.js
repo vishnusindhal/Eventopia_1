@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const notificationController = require('../controllers/notificationController');
 const { protect } = require('../middleware/auth');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
 
 // @route   GET /api/notifications
 // @desc    Get user's notifications (paginated, with search & read filter)
@@ -11,7 +12,7 @@ router.get('/', protect, notificationController.getNotifications);
 // @route   GET /api/notifications/unread-count
 // @desc    Get unread notification count
 // @access  Private
-router.get('/unread-count', protect, notificationController.getUnreadCount);
+router.get('/unread-count', protect, cacheMiddleware(), notificationController.getUnreadCount);
 
 // @route   PATCH /api/notifications/read-all
 // @desc    Mark all notifications as read

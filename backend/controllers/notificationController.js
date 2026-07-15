@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const cacheService = require('../services/cacheService');
 
 // @desc    Get user's notifications (paginated)
 // @route   GET /api/notifications
@@ -78,6 +79,9 @@ exports.markAsRead = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Notification not found' });
     }
 
+    // Invalidate cached unread notifications count
+    await cacheService.invalidateUnreadCount(req.user.id);
+
     res.status(200).json({ success: true, notification });
   } catch (error) {
     console.error(error);
@@ -94,6 +98,9 @@ exports.markAllAsRead = async (req, res) => {
       { userId: req.user.id, read: false },
       { read: true }
     );
+
+    // Invalidate cached unread notifications count
+    await cacheService.invalidateUnreadCount(req.user.id);
 
     res.status(200).json({ success: true, message: 'All notifications marked as read' });
   } catch (error) {
@@ -116,6 +123,9 @@ exports.deleteNotification = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Notification not found' });
     }
 
+    // Invalidate cached unread notifications count
+    await cacheService.invalidateUnreadCount(req.user.id);
+
     res.status(200).json({ success: true, message: 'Notification deleted' });
   } catch (error) {
     console.error(error);
@@ -129,6 +139,10 @@ exports.deleteNotification = async (req, res) => {
 exports.deleteAllNotifications = async (req, res) => {
   try {
     await Notification.deleteMany({ userId: req.user.id });
+
+    // Invalidate cached unread notifications count
+    await cacheService.invalidateUnreadCount(req.user.id);
+
     res.status(200).json({ success: true, message: 'All notifications deleted' });
   } catch (error) {
     console.error(error);

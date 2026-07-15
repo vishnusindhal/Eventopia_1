@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
 
 // @route   GET /api/users/events
 // @desc    Get user's submitted events
@@ -16,6 +17,6 @@ router.get('/registered-events', protect, userController.getRegisteredEvents);
 // @route   GET /api/users/stats
 // @desc    Get user statistics
 // @access  Private
-router.get('/stats', protect, userController.getUserStats);
+router.get('/stats', protect, cacheMiddleware(), userController.getUserStats);
 
 module.exports = router;

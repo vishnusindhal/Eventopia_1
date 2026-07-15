@@ -4,31 +4,36 @@ const { body } = require('express-validator');
 const eventController = require('../controllers/eventController');
 const exportController = require('../controllers/exportController');
 const { protect, authorize } = require('../middleware/auth');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
+const rateLimiter = require('../middleware/rateLimiter');
+
+// Rate limiter for submit event: max 5 requests per 1 minute
+const submitEventLimiter = rateLimiter({ windowMs: 60000, max: 5 });
 
 // @route   GET /api/events
 // @desc    Get all events (with filters)
 // @access  Public
-router.get('/', eventController.getEvents);
+router.get('/', cacheMiddleware(), eventController.getEvents);
 
 // @route   GET /api/events/:id
 // @desc    Get single event by ID
 // @access  Public
-router.get('/:id', eventController.getEvent);
+router.get('/:id', cacheMiddleware(), eventController.getEvent);
 
 // @route   GET /api/events/college/:collegeName
 // @desc    Get events by college name
 // @access  Public
-router.get('/college/:collegeName', eventController.getEventsByCollege);
+router.get('/college/:collegeName', cacheMiddleware(), eventController.getEventsByCollege);
 
 // @route   GET /api/events/institution/:institutionType
 // @desc    Get events by institution type (IIIT/NIT/IIT)
 // @access  Public
-router.get('/institution/:institutionType', eventController.getEventsByInstitution);
+router.get('/institution/:institutionType', cacheMiddleware(), eventController.getEventsByInstitution);
 
 // @route   POST /api/events
 // @desc    Create a new event
 // @access  Private
-router.post('/', protect, [
+router.post('/', protect, submitEventLimiter, [
   body('title').notEmpty().withMessage('Event title is required'),
   body('description').notEmpty().withMessage('Event description is required'),
   body('type').notEmpty().withMessage('Event type is required'),

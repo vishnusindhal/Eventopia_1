@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const cacheService = require('../services/cacheService');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -133,6 +134,10 @@ exports.updateProfile = async (req, res) => {
     if (institutionType) user.institutionType = institutionType;
 
     await user.save();
+
+    // Invalidate cached user stats and general event lists
+    await cacheService.invalidateUserStats(req.user.id);
+    await cacheService.invalidateAllLists();
 
     res.status(200).json({
       success: true,

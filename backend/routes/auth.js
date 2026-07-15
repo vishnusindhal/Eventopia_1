@@ -3,11 +3,15 @@ const router = express.Router();
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
+const rateLimiter = require('../middleware/rateLimiter');
+
+// Rate limiter for auth endpoints: max 10 requests per 1 minute
+const authLimiter = rateLimiter({ windowMs: 60000, max: 10 });
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
-router.post('/register', [
+router.post('/register', authLimiter, [
   body('name').notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
@@ -17,7 +21,7 @@ router.post('/register', [
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', [
+router.post('/login', authLimiter, [
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').notEmpty().withMessage('Password is required')
 ], authController.login);

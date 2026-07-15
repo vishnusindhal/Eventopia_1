@@ -2,6 +2,7 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const emailService = require('./emailService');
 const socketService = require('./socketService');
+const cacheService = require('../services/cacheService');
 
 /**
  * Called when an event is approved. Finds all matching subscribers,
@@ -36,6 +37,13 @@ async function notifyOnEventApproval(event) {
     // Insert all at once for performance
     const created = await Notification.insertMany(notifications, { ordered: false });
     console.log(`[NotificationService] Created ${created.length} in-app notifications`);
+
+    // Invalidate cached unread counts for all matching users in Redis
+    try {
+      await Promise.all(matchingUsers.map(user => cacheService.invalidateUnreadCount(user._id.toString())));
+    } catch (cacheErr) {
+      console.error('[NotificationService] Error invalidating unread count caches:', cacheErr.message);
+    }
 
     // Deliver real-time socket events and emails concurrently
     const deliveryPromises = matchingUsers.map(async (user, i) => {
