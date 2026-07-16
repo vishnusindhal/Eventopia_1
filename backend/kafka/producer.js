@@ -5,10 +5,12 @@
  * - Lazy initialization with retry backoff
  * - Graceful fallback when Kafka is unavailable
  * - Fire-and-forget publishing (never blocks HTTP responses)
+ * - Structured observability logging via kafkaLogger
  * - Graceful shutdown support
  */
 
 const { Kafka, logLevel } = require('kafkajs');
+const kafkaLogger = require('./kafkaLogger');
 
 const brokers = (process.env.KAFKA_BROKERS || 'localhost:9092').split(',');
 const clientId = process.env.KAFKA_CLIENT_ID || 'eventopia-backend';
@@ -38,20 +40,20 @@ const initProducer = async () => {
   });
 
   producer.on('producer.connect', () => {
-    console.log('[Kafka Producer] Connected');
+    kafkaLogger.logConnection('Producer', 'CONNECTED');
     isConnected = true;
   });
 
   producer.on('producer.disconnect', () => {
-    console.warn('[Kafka Producer] Disconnected');
+    kafkaLogger.logConnection('Producer', 'DISCONNECTED');
     isConnected = false;
   });
 
   try {
     await producer.connect();
   } catch (err) {
-    console.error('[Kafka Producer] Initial connection failed:', err.message);
-    console.warn('[Kafka Producer] Will retry on next publish attempt');
+    kafkaLogger.logConnection('Producer', 'CONNECTION_FAILED', { error: err.message });
+    kafkaLogger.logSystemWarn('PRODUCER_FALLBACK', { message: 'Will retry on next publish attempt' });
     isConnected = false;
   }
 };
@@ -66,14 +68,16 @@ const initProducer = async () => {
  */
 const publishEvent = async (topic, key, payload) => {
   if (!producer) {
-    console.warn(`[Kafka Producer] Not initialized — skipping publish to ${topic}`);
+    kafkaLogger.logPublishFailed({ topic, key, error: 'Producer not initialized' });
     return;
   }
+
+  const producerTimestamp = new Date().toISOString();
 
   try {
     // If disconnected, attempt a reconnect before publishing
     if (!isConnected) {
-      console.log('[Kafka Producer] Attempting reconnect before publish...');
+      kafkaLogger.logConnection('Producer', 'RECONNECTING', { topic });
       await producer.connect();
     }
 
@@ -84,15 +88,25 @@ const publishEvent = async (topic, key, payload) => {
           key: String(key),
           value: JSON.stringify({
             ...payload,
-            timestamp: new Date().toISOString()
+            timestamp: producerTimestamp
           })
         }
       ]
     });
 
-    console.log(`[Kafka Producer] Published to ${topic} (key: ${key})`);
+    kafkaLogger.logPublished({
+      topic,
+      eventId: payload.eventId || key,
+      key: String(key),
+      producerTimestamp
+    });
   } catch (err) {
-    console.error(`[Kafka Producer] Failed to publish to ${topic}:`, err.message);
+    kafkaLogger.logPublishFailed({
+      topic,
+      eventId: payload.eventId || key,
+      key: String(key),
+      error: err.message
+    });
     // Silently fail — API continues working without Kafka
   }
 };
@@ -104,9 +118,9 @@ const disconnectProducer = async () => {
   if (producer) {
     try {
       await producer.disconnect();
-      console.log('[Kafka Producer] Gracefully disconnected');
+      kafkaLogger.logConnection('Producer', 'SHUTDOWN');
     } catch (err) {
-      console.error('[Kafka Producer] Error during disconnect:', err.message);
+      kafkaLogger.logConnection('Producer', 'SHUTDOWN_ERROR', { error: err.message });
     }
   }
 };

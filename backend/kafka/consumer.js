@@ -4,11 +4,14 @@
  * Creates isolated consumer instances with:
  * - Per-message retry with exponential backoff
  * - Dead letter logging for permanently failed messages
+ * - Automatic structured observability via kafkaLogger
+ * - Processing duration measurement per message
  * - Graceful shutdown support
  * - Independent consumer groups for fan-out
  */
 
 const { kafka } = require('./producer');
+const kafkaLogger = require('./kafkaLogger');
 
 // Track all active consumers for graceful shutdown
 const activeConsumers = [];
@@ -17,7 +20,7 @@ const activeConsumers = [];
  * Create and start a Kafka consumer.
  *
  * @param {string} groupId - Consumer group ID (use CONSUMER_GROUPS constants)
- * @param {Object.<string, Function>} topicHandlers - Map of topic name → async handler(parsedPayload)
+ * @param {Object.<string, Function>} topicHandlers - Map of topic name → async handler(parsedPayload, meta)
  * @param {object} [options]
  * @param {number} [options.maxRetries=3] - Max retry attempts per message
  * @param {number} [options.baseRetryMs=100] - Base retry delay in ms (exponential)
@@ -38,15 +41,17 @@ const createConsumer = async (groupId, topicHandlers, options = {}) => {
   });
 
   consumer.on('consumer.connect', () => {
-    console.log(`[Kafka Consumer:${groupId}] Connected`);
+    kafkaLogger.logConnection(`Consumer:${groupId}`, 'CONNECTED');
   });
 
   consumer.on('consumer.disconnect', () => {
-    console.warn(`[Kafka Consumer:${groupId}] Disconnected`);
+    kafkaLogger.logConnection(`Consumer:${groupId}`, 'DISCONNECTED');
   });
 
   consumer.on('consumer.crash', ({ payload }) => {
-    console.error(`[Kafka Consumer:${groupId}] Crashed:`, payload.error?.message);
+    kafkaLogger.logConnection(`Consumer:${groupId}`, 'CRASHED', {
+      error: payload.error?.message
+    });
   });
 
   try {
@@ -62,18 +67,40 @@ const createConsumer = async (groupId, topicHandlers, options = {}) => {
       eachMessage: async ({ topic, partition, message }) => {
         const handler = topicHandlers[topic];
         if (!handler) {
-          console.warn(`[Kafka Consumer:${groupId}] No handler for topic: ${topic}`);
+          kafkaLogger.logSystemWarn('NO_HANDLER', { consumer: groupId, topic });
           return;
         }
 
+        // Parse message payload
         let payload;
         try {
           payload = JSON.parse(message.value.toString());
         } catch (parseErr) {
-          console.error(`[Kafka Consumer:${groupId}] Malformed message on ${topic}:`, parseErr.message);
-          logDeadLetter(groupId, topic, message, 'PARSE_ERROR', parseErr.message);
+          kafkaLogger.logDeadLetter({
+            consumer: groupId,
+            topic,
+            eventId: message.key?.toString(),
+            partition,
+            offset: message.offset,
+            reason: 'PARSE_ERROR',
+            error: parseErr.message,
+            valueSample: message.value?.toString().substring(0, 200)
+          });
           return; // Skip unrecoverable malformed messages
         }
+
+        const eventId = payload.eventId || message.key?.toString();
+        const producerTimestamp = payload.timestamp || null;
+
+        // Start structured trace — returns a `finish()` callback
+        const finish = kafkaLogger.logConsumeStart({
+          consumer: groupId,
+          topic,
+          eventId,
+          partition,
+          offset: message.offset,
+          producerTimestamp
+        });
 
         // Retry loop with exponential backoff
         let attempt = 0;
@@ -86,23 +113,40 @@ const createConsumer = async (groupId, topicHandlers, options = {}) => {
               key: message.key?.toString(),
               timestamp: message.timestamp
             });
-            return; // Success — exit retry loop
+
+            // ✅ Success — log structured completion
+            finish({ status: 'SUCCESS' });
+            return;
           } catch (handlerErr) {
             attempt++;
             if (attempt > maxRetries) {
-              console.error(
-                `[Kafka Consumer:${groupId}] Handler failed after ${maxRetries} retries on ${topic}:`,
-                handlerErr.message
-              );
-              logDeadLetter(groupId, topic, message, 'HANDLER_FAILURE', handlerErr.message);
-              return; // Exhausted retries — skip message
+              // ❌ Exhausted retries — dead letter
+              finish({ status: 'DLQ', error: handlerErr.message });
+
+              kafkaLogger.logDeadLetter({
+                consumer: groupId,
+                topic,
+                eventId,
+                partition,
+                offset: message.offset,
+                reason: 'HANDLER_FAILURE',
+                error: handlerErr.message,
+                valueSample: message.value?.toString().substring(0, 200)
+              });
+              return;
             }
 
+            // ⚠️ Retry
             const delay = baseRetryMs * Math.pow(4, attempt - 1); // 100ms → 400ms → 1600ms
-            console.warn(
-              `[Kafka Consumer:${groupId}] Retry ${attempt}/${maxRetries} for ${topic} in ${delay}ms:`,
-              handlerErr.message
-            );
+            kafkaLogger.logRetry({
+              consumer: groupId,
+              topic,
+              eventId,
+              attempt,
+              maxRetries,
+              delayMs: delay,
+              error: handlerErr.message
+            });
             await sleep(delay);
           }
         }
@@ -110,32 +154,18 @@ const createConsumer = async (groupId, topicHandlers, options = {}) => {
     });
 
     activeConsumers.push(consumer);
-    console.log(`[Kafka Consumer:${groupId}] Running — subscribed to: [${topics.join(', ')}]`);
+    kafkaLogger.logSystem('CONSUMER_RUNNING', {
+      consumer: groupId,
+      topics
+    });
     return consumer;
   } catch (err) {
-    console.error(`[Kafka Consumer:${groupId}] Failed to start:`, err.message);
+    kafkaLogger.logConnection(`Consumer:${groupId}`, 'START_FAILED', {
+      error: err.message
+    });
     return null;
   }
 };
-
-/**
- * Log a permanently failed message as a dead letter entry.
- * In a production environment, this could publish to a dedicated DLQ topic.
- */
-function logDeadLetter(groupId, topic, message, reason, errorMessage) {
-  const dlqEntry = {
-    consumer: groupId,
-    topic,
-    partition: message.partition,
-    offset: message.offset,
-    key: message.key?.toString(),
-    reason,
-    error: errorMessage,
-    timestamp: new Date().toISOString(),
-    value: message.value?.toString().substring(0, 500) // Truncate for logging
-  };
-  console.error(`[Kafka DLQ] Dead letter:`, JSON.stringify(dlqEntry));
-}
 
 /**
  * Disconnect all active consumers gracefully.
@@ -145,11 +175,11 @@ const disconnectAllConsumers = async () => {
     try {
       await consumer.disconnect();
     } catch (err) {
-      console.error('[Kafka Consumer] Error during disconnect:', err.message);
+      kafkaLogger.logConnection('Consumer', 'SHUTDOWN_ERROR', { error: err.message });
     }
   }
   activeConsumers.length = 0;
-  console.log('[Kafka Consumer] All consumers disconnected');
+  kafkaLogger.logSystem('ALL_CONSUMERS_SHUTDOWN');
 };
 
 /**

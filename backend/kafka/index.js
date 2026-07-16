@@ -15,6 +15,7 @@ const { disconnectAllConsumers } = require('./consumer');
 const { initEmailConsumer } = require('./consumers/emailConsumer');
 const { initNotificationConsumer } = require('./consumers/notificationConsumer');
 const { initAnalyticsConsumer } = require('./consumers/analyticsConsumer');
+const kafkaLogger = require('./kafkaLogger');
 
 /**
  * Initialize the Kafka producer and all consumer workers.
@@ -22,7 +23,7 @@ const { initAnalyticsConsumer } = require('./consumers/analyticsConsumer');
  * and consumers/producers will retry automatically.
  */
 const initKafka = async () => {
-  console.log('[Kafka] Initializing Kafka module...');
+  kafkaLogger.logSystem('INITIALIZING');
 
   try {
     // Initialize producer first
@@ -35,10 +36,10 @@ const initKafka = async () => {
       initAnalyticsConsumer()
     ]);
 
-    console.log('[Kafka] Module initialization complete');
+    kafkaLogger.logSystem('INITIALIZATION_COMPLETE');
   } catch (err) {
-    console.error('[Kafka] Module initialization error:', err.message);
-    console.warn('[Kafka] Application will continue without Kafka — background tasks disabled');
+    kafkaLogger.logSystemError('INITIALIZATION_ERROR', { error: err.message });
+    kafkaLogger.logSystemWarn('FALLBACK_MODE', { message: 'Application will continue without Kafka — background tasks disabled' });
   }
 };
 
@@ -47,10 +48,10 @@ const initKafka = async () => {
  * Called on SIGTERM / SIGINT process signals.
  */
 const shutdownKafka = async () => {
-  console.log('[Kafka] Shutting down...');
+  kafkaLogger.logSystem('SHUTDOWN_START');
   await disconnectAllConsumers();
   await disconnectProducer();
-  console.log('[Kafka] Shutdown complete');
+  kafkaLogger.logSystem('SHUTDOWN_COMPLETE');
 };
 
 module.exports = { initKafka, shutdownKafka };

@@ -342,6 +342,15 @@ Student/Admin  →  Express API  →  MongoDB (write)
 - **Dead Letters**: After exhausting retries, failed messages are logged with structured JSON for debugging.
 - **Graceful Fallback**: If Kafka is unavailable, the API continues working normally — background tasks simply don't execute until Kafka recovers.
 
+### Structured Logging & Observability
+
+Eventopia implements structured logging for every Kafka event through `kafkaLogger.js`. All logs are outputted as single-line, machine-parseable JSON objects:
+
+- **Unified Format**: Includes `level`, `component`, `action`, and `timestamp` fields.
+- **Publish Telemetry**: Logs topic, message key, event ID, and producer timestamp when messages are published.
+- **Consume Telemetry**: Measures processing duration (in milliseconds) and captures producer/consumer timestamp gaps, partition, offset, and final processing status (`SUCCESS`, `RETRY`, `FAILED`, `DLQ`).
+- **Standardized Tracing**: Allows developers to trace an event's entire lifecycle from creation to individual group consumptions.
+
 ### Kafka Troubleshooting
 
 | Issue | Fix |

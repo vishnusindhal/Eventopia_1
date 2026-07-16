@@ -13,12 +13,14 @@
 
 const { createConsumer } = require('../consumer');
 const { TOPICS, CONSUMER_GROUPS } = require('../topics');
+const kafkaLogger = require('../kafkaLogger');
 const Notification = require('../../models/Notification');
 const Event = require('../../models/Event');
-const User = require('../../models/User');
 const { findMatchingSubscribers } = require('../../services/notificationService');
 const socketService = require('../../services/socketService');
 const cacheService = require('../../services/cacheService');
+
+const CONSUMER_NAME = 'notification';
 
 /**
  * Handle event.approved — Create bulk in-app notifications for matching subscribers.
@@ -30,18 +32,18 @@ async function handleEventApproved(payload) {
 
   const event = await Event.findById(eventId);
   if (!event) {
-    console.warn(`[Notification Consumer] Event not found: ${eventId}`);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.WARN, `Consumer:${CONSUMER_NAME}`, 'EVENT_NOT_FOUND', { eventId });
     return;
   }
 
   const matchingUsers = await findMatchingSubscribers(event);
 
   if (matchingUsers.length === 0) {
-    console.log(`[Notification Consumer] No subscribers matched for "${event.title}"`);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'NO_SUBSCRIBERS', {
+      eventId, eventTitle: event.title
+    });
     return;
   }
-
-  console.log(`[Notification Consumer] Creating notifications for ${matchingUsers.length} subscriber(s)`);
 
   const actionUrl = `/event/${event._id}`;
 
@@ -57,7 +59,6 @@ async function handleEventApproved(payload) {
 
   // Bulk insert for performance
   const created = await Notification.insertMany(notifications, { ordered: false });
-  console.log(`[Notification Consumer] Created ${created.length} in-app notifications`);
 
   // Invalidate cached unread counts for all matching users in Redis
   try {
@@ -65,10 +66,13 @@ async function handleEventApproved(payload) {
       matchingUsers.map(user => cacheService.invalidateUnreadCount(user._id.toString()))
     );
   } catch (cacheErr) {
-    console.error('[Notification Consumer] Cache invalidation error:', cacheErr.message);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.ERROR, `Consumer:${CONSUMER_NAME}`, 'CACHE_INVALIDATION_ERROR', {
+      eventId, error: cacheErr.message
+    });
   }
 
   // Emit real-time Socket.IO events
+  let socketsSent = 0;
   matchingUsers.forEach((user, i) => {
     if (user.notificationPreferences?.inAppEnabled !== false) {
       const notifDoc = created[i];
@@ -83,8 +87,17 @@ async function handleEventApproved(payload) {
           read: false,
           createdAt: notifDoc.createdAt
         });
+        socketsSent++;
       }
     }
+  });
+
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'APPROVAL_NOTIFICATIONS_CREATED', {
+    eventId,
+    eventTitle: event.title,
+    subscribersMatched: matchingUsers.length,
+    notificationsCreated: created.length,
+    socketEventsSent: socketsSent
   });
 }
 
@@ -119,7 +132,9 @@ async function handleRegistrationCreated(payload) {
     createdAt: notification.createdAt
   });
 
-  console.log(`[Notification Consumer] Organizer ${organizerId} notified of registration`);
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'ORGANIZER_NOTIFIED_REGISTRATION', {
+    eventId, organizerId, userName
+  });
 }
 
 /**
@@ -150,7 +165,9 @@ async function handleRegistrationCancelled(payload) {
     createdAt: notification.createdAt
   });
 
-  console.log(`[Notification Consumer] Organizer ${organizerId} notified of cancellation`);
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'ORGANIZER_NOTIFIED_CANCELLATION', {
+    eventId, organizerId, userName
+  });
 }
 
 /**

@@ -13,9 +13,12 @@
 
 const { createConsumer } = require('../consumer');
 const { TOPICS, CONSUMER_GROUPS } = require('../topics');
+const kafkaLogger = require('../kafkaLogger');
 const Event = require('../../models/Event');
 const { findMatchingSubscribers } = require('../../services/notificationService');
 const cacheService = require('../../services/cacheService');
+
+const CONSUMER_NAME = 'analytics';
 
 /**
  * Handle event.approved — Update subscriberCount with the number of matched subscribers.
@@ -25,7 +28,7 @@ async function handleEventApproved(payload) {
 
   const event = await Event.findById(eventId);
   if (!event) {
-    console.warn(`[Analytics Consumer] Event not found: ${eventId}`);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.WARN, `Consumer:${CONSUMER_NAME}`, 'EVENT_NOT_FOUND', { eventId });
     return;
   }
 
@@ -47,7 +50,11 @@ async function handleEventApproved(payload) {
     );
   }
 
-  console.log(`[Analytics Consumer] Event "${event.title}" — subscriberCount +${subscriberCount}`);
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'SUBSCRIBER_COUNT_UPDATED', {
+    eventId,
+    eventTitle: event.title,
+    subscriberCountIncrement: subscriberCount
+  });
 }
 
 /**
@@ -56,16 +63,14 @@ async function handleEventApproved(payload) {
 async function handleRegistrationCreated(payload) {
   const { eventId, eventTitle, userId, userName, college } = payload;
 
-  // Structured analytics log
-  console.log(`[Analytics Consumer] REGISTRATION`, JSON.stringify({
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'REGISTRATION', {
     action: 'register',
     eventId,
     eventTitle,
     userId,
     userName,
-    college,
-    timestamp: new Date().toISOString()
-  }));
+    college
+  });
 
   // Invalidate event detail cache (registeredUsers count changed)
   const event = await Event.findById(eventId).select('college institutionType createdBy');
@@ -85,14 +90,13 @@ async function handleRegistrationCreated(payload) {
 async function handleRegistrationCancelled(payload) {
   const { eventId, eventTitle, userId, userName } = payload;
 
-  console.log(`[Analytics Consumer] CANCELLATION`, JSON.stringify({
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'CANCELLATION', {
     action: 'cancel',
     eventId,
     eventTitle,
     userId,
-    userName,
-    timestamp: new Date().toISOString()
-  }));
+    userName
+  });
 
   // Invalidate event detail cache
   const event = await Event.findById(eventId).select('college institutionType createdBy');

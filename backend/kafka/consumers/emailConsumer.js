@@ -12,10 +12,13 @@
 
 const { createConsumer } = require('../consumer');
 const { TOPICS, CONSUMER_GROUPS } = require('../topics');
+const kafkaLogger = require('../kafkaLogger');
 const emailService = require('../../services/emailService');
 const { findMatchingSubscribers } = require('../../services/notificationService');
 const Event = require('../../models/Event');
 const User = require('../../models/User');
+
+const CONSUMER_NAME = 'email';
 
 /**
  * Handle event.approved — Send emails to all matching subscribers.
@@ -26,7 +29,7 @@ async function handleEventApproved(payload) {
   // Fetch the full event document for email template rendering
   const event = await Event.findById(eventId);
   if (!event) {
-    console.warn(`[Email Consumer] Event not found: ${eventId}`);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.WARN, `Consumer:${CONSUMER_NAME}`, 'EVENT_NOT_FOUND', { eventId });
     return;
   }
 
@@ -34,25 +37,33 @@ async function handleEventApproved(payload) {
   const matchingUsers = await findMatchingSubscribers(event);
 
   if (matchingUsers.length === 0) {
-    console.log(`[Email Consumer] No subscribers matched for "${event.title}"`);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'NO_SUBSCRIBERS', {
+      eventId, eventTitle: event.title
+    });
     return;
   }
 
-  console.log(`[Email Consumer] Sending emails to ${matchingUsers.length} subscriber(s) for "${event.title}"`);
-
   // Send emails concurrently (emailService handles individual failures internally)
+  const eligibleUsers = matchingUsers.filter(user =>
+    user.notificationPreferences?.emailEnabled !== false &&
+    user.notificationPreferences?.instantAlerts !== false
+  );
+
   const results = await Promise.allSettled(
-    matchingUsers
-      .filter(user =>
-        user.notificationPreferences?.emailEnabled !== false &&
-        user.notificationPreferences?.instantAlerts !== false
-      )
-      .map(user => emailService.sendEventNotification(user.email, event))
+    eligibleUsers.map(user => emailService.sendEventNotification(user.email, event))
   );
 
   const sent = results.filter(r => r.status === 'fulfilled').length;
   const failed = results.filter(r => r.status === 'rejected').length;
-  console.log(`[Email Consumer] Event approval emails — sent: ${sent}, failed: ${failed}`);
+
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'APPROVAL_EMAILS_SENT', {
+    eventId,
+    eventTitle: event.title,
+    subscribersMatched: matchingUsers.length,
+    eligible: eligibleUsers.length,
+    sent,
+    failed
+  });
 }
 
 /**
@@ -62,7 +73,9 @@ async function handleEventRejected(payload) {
   const { eventId, title, contact } = payload;
 
   if (!contact) {
-    console.warn(`[Email Consumer] No contact email for rejected event: ${eventId}`);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.WARN, `Consumer:${CONSUMER_NAME}`, 'NO_CONTACT_EMAIL', {
+      eventId, eventTitle: title
+    });
     return;
   }
 
@@ -76,23 +89,31 @@ async function handleEventRejected(payload) {
   `;
 
   await emailService.sendMail(contact, subject, html);
-  console.log(`[Email Consumer] Rejection email sent to organizer: ${contact}`);
+
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'REJECTION_EMAIL_SENT', {
+    eventId, recipient: contact
+  });
 }
 
 /**
  * Handle registration.created — Send confirmation email to the student.
  */
 async function handleRegistrationCreated(payload) {
-  const { userId, eventTitle, eventDate, eventVenue, college } = payload;
+  const { userId, eventId, eventTitle, eventDate, eventVenue, college } = payload;
 
   const user = await User.findById(userId).select('email name notificationPreferences');
   if (!user) {
-    console.warn(`[Email Consumer] User not found for registration email: ${userId}`);
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.WARN, `Consumer:${CONSUMER_NAME}`, 'USER_NOT_FOUND', {
+      userId, eventId
+    });
     return;
   }
 
   // Respect user email preferences
   if (user.notificationPreferences?.emailEnabled === false) {
+    kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'EMAIL_DISABLED_BY_USER', {
+      userId, eventId
+    });
     return;
   }
 
@@ -115,7 +136,10 @@ async function handleRegistrationCreated(payload) {
   `;
 
   await emailService.sendMail(user.email, subject, html);
-  console.log(`[Email Consumer] Registration confirmation sent to: ${user.email}`);
+
+  kafkaLogger.log(kafkaLogger.LOG_LEVELS.INFO, `Consumer:${CONSUMER_NAME}`, 'REGISTRATION_EMAIL_SENT', {
+    eventId, recipient: user.email
+  });
 }
 
 /**
