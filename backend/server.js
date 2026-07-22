@@ -143,6 +143,15 @@ app.get('/', (req, res) => {
     res.json({ message: 'Eventopia API is running!' });
 });
 
+// Dedicated health endpoint — pinged by external cron to prevent Render cold starts
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'OK',
+        uptime: `${Math.floor(process.uptime())}s`,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
