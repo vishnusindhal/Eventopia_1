@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { useAuth } from '../contexts/AuthContext';
+import { getSubscriptions, updateSubscriptions } from '../services/subscriptionService';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [subscribedColleges, setSubscribedColleges] = useState([]);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      getSubscriptions()
+        .then(res => {
+          setSubscribedColleges(res.subscriptions?.institutes || []);
+        })
+        .catch(err => console.error('Error fetching subscriptions:', err));
+    } else {
+      setSubscribedColleges([]);
+    }
+  }, [user]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -14,30 +30,61 @@ const Home = () => {
     }
   };
 
+  const handleFollow = async (collegeName, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const isFollowing = subscribedColleges.includes(collegeName);
+    const updated = isFollowing 
+      ? subscribedColleges.filter(c => c !== collegeName)
+      : [...subscribedColleges, collegeName];
+
+    try {
+      const res = await getSubscriptions();
+      const subs = res.subscriptions || {};
+      
+      await updateSubscriptions({
+        institutes: updated,
+        institutionTypes: subs.institutionTypes || [],
+        categories: subs.categories || [],
+        subscribeAllInstitutes: subs.subscribeAllInstitutes || false
+      });
+
+      setSubscribedColleges(updated);
+    } catch (err) {
+      console.error('Failed to update subscription:', err);
+    }
+  };
+
   const popularSearches = ['Hackathons', 'Workshops', 'AI', 'Web Dev', 'ML', 'Cyber Security'];
 
   const categories = [
-    { name: 'Hackathons', icon: '💻', color: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300' },
-    { name: 'Coding Contest', icon: '🏆', color: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300' },
-    { name: 'Workshops', icon: '🔧', color: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300' },
-    { name: 'Conferences', icon: '🎤', color: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300' },
-    { name: 'Seminars', icon: '📖', color: 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300' },
-    { name: 'Bootcamps', icon: '🚀', color: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-300' },
-    { name: 'AI', icon: '🤖', color: 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300' },
-    { name: 'Cloud Computing', icon: '☁️', color: 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300' },
-    { name: 'Cyber Security', icon: '🔒', color: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300' },
-    { name: 'Data Science', icon: '📊', color: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300' },
-    { name: 'Web Development', icon: '🌐', color: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300' },
-    { name: 'Robotics', icon: '🤖', color: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300' },
+    { name: 'Hackathons', icon: '💻', color: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300', query: 'type=Hackathon' },
+    { name: 'Coding Contest', icon: '🏆', color: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300', query: 'type=Coding Contest' },
+    { name: 'Workshops', icon: '🔧', color: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300', query: 'type=Workshop' },
+    { name: 'Conferences', icon: '🎤', color: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300', query: 'search=Conference' },
+    { name: 'Seminars', icon: '📖', color: 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300', query: 'type=Seminar' },
+    { name: 'Bootcamps', icon: '🚀', color: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-300', query: 'search=Bootcamp' },
+    { name: 'AI', icon: '🤖', color: 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300', query: 'search=AI' },
+    { name: 'Cloud Computing', icon: '☁️', color: 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300', query: 'search=Cloud' },
+    { name: 'Cyber Security', icon: '🔒', color: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300', query: 'search=Cyber' },
+    { name: 'Data Science', icon: '📊', color: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300', query: 'search=Data' },
+    { name: 'Web Development', icon: '🌐', color: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300', query: 'search=Web' },
+    { name: 'Robotics', icon: '🤖', color: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300', query: 'search=Robotics' },
   ];
 
   const trendingColleges = [
-    { name: 'IIT Bombay', events: 132, followers: '15.1K', path: '/iit', type: 'IIT' },
-    { name: 'IIT Hyderabad', events: 98, followers: '10.5K', path: '/iit', type: 'IIT' },
-    { name: 'NIT Trichy', events: 85, followers: '8.2K', path: '/nit', type: 'NIT' },
-    { name: 'IIIT Surat', events: 45, followers: '4.8K', path: '/iiit', type: 'IIIT' },
-    { name: 'IIT Delhi', events: 120, followers: '18.5K', path: '/iit', type: 'IIT' },
-    { name: 'NIT Warangal', events: 72, followers: '6.2K', path: '/nit', type: 'NIT' },
+    { name: 'IIT Bombay', events: 132, followers: '15.1K', path: '/iit/iit-bombay', type: 'IIT' },
+    { name: 'IIT Hyderabad', events: 98, followers: '10.5K', path: '/iit/iit-hyderabad', type: 'IIT' },
+    { name: 'NIT Trichy', events: 85, followers: '8.2K', path: '/nit/nit-trichy', type: 'NIT' },
+    { name: 'IIIT Surat', events: 45, followers: '4.8K', path: '/iiit/iiit-surat', type: 'IIIT' },
+    { name: 'IIT Delhi', events: 120, followers: '18.5K', path: '/iit/iit-delhi', type: 'IIT' },
+    { name: 'NIT Warangal', events: 72, followers: '6.2K', path: '/nit/nit-warangal', type: 'NIT' },
   ];
 
   const stats = [
@@ -194,7 +241,7 @@ const Home = () => {
             {categories.map((cat) => (
               <Link
                 key={cat.name}
-                to={`/events?search=${encodeURIComponent(cat.name)}`}
+                to={`/events?${cat.query}`}
                 className="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200 hover:-translate-y-1"
               >
                 <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${cat.color} transition-transform group-hover:scale-110`}>
@@ -222,7 +269,11 @@ const Home = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {trendingColleges.map((college) => (
-              <Card key={college.name} className="p-6 flex flex-col items-center text-center hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-200 hover:-translate-y-1">
+              <Card 
+                key={college.name} 
+                onClick={() => navigate(college.path)}
+                className="p-6 flex flex-col items-center text-center hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-200 hover:-translate-y-1 cursor-pointer"
+              >
                 {/* College avatar */}
                 <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-300 mb-4 border-2 border-indigo-200 dark:border-indigo-700">
                   {college.name.charAt(0)}
@@ -236,11 +287,16 @@ const Home = () => {
                 <span className="inline-block px-3 py-0.5 text-[10px] font-bold uppercase rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 mb-4">
                   {college.type}
                 </span>
-                <Link to={college.path}>
-                  <button className="px-6 py-2 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-300 font-semibold rounded-lg hover:bg-indigo-500 hover:text-white transition-all text-sm">
-                    Follow
-                  </button>
-                </Link>
+                <button 
+                  onClick={(e) => handleFollow(college.name, e)}
+                  className={`px-6 py-2 border-2 font-semibold rounded-lg transition-all text-sm ${
+                    subscribedColleges.includes(college.name)
+                      ? 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700'
+                      : 'border-indigo-500 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-500 hover:text-white'
+                  }`}
+                >
+                  {subscribedColleges.includes(college.name) ? 'Following' : 'Follow'}
+                </button>
               </Card>
             ))}
           </div>

@@ -32,3 +32,8 @@ build/
 *.njsproj
 *.sln
 *.sw?
+
+# Deployment and Security files
+*.pem
+deploy.env
+eventopia.tar.gz
