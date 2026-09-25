@@ -75,12 +75,13 @@ echo "--> [5/6] Starting application containers using Docker Compose..."
 cd ~/eventopia
 
 # Force rebuild to ensure code updates are captured
-sudo docker compose down -v --remove-orphans || true
+sudo docker compose down --remove-orphans || true
 sudo docker compose up --build -d
 
-# 6. Verify Status
-echo "--> [6/6] Verifying container statuses..."
-sleep 5
+# 6. Seed Database and Verify Status
+echo "--> [6/6] Seeding database and verifying container statuses..."
+sleep 8
+sudo docker compose exec -T backend node seed.js || true
 sudo docker compose ps
 
 # Cleanup transfer archive

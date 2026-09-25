@@ -91,11 +91,10 @@ const cacheMiddleware = (options = {}) => {
 
       // Only cache successful JSON responses with data
       if (res.statusCode >= 200 && res.statusCode < 300 && body && body.success !== false) {
-        // Do not cache empty query lists or empty event responses
+        // Do not cache empty event lists or empty responses
         const isEmptyEventsList = Array.isArray(body.events) && body.events.length === 0;
-        const isEmptySearch = cacheKey.startsWith('events:search:') && isEmptyEventsList;
         
-        if (!isEmptySearch) {
+        if (!isEmptyEventsList) {
           cacheService.set(cacheKey, body, ttlSeconds).catch(err => {
             console.error(`[Cache Middleware] Async set failed for key ${cacheKey}:`, err.message);
           });

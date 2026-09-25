@@ -5,6 +5,33 @@ const cacheService = require('../services/cacheService');
 const eventProducer = require('../kafka/producers/eventProducer');
 const registrationProducer = require('../kafka/producers/registrationProducer');
 
+// Helper function to sort events: Live/Upcoming events on top, Closed/Past events at bottom
+const sortEventsLiveFirst = (eventsList) => {
+  const now = new Date();
+  return eventsList.sort((a, b) => {
+    const aDate = a.date ? new Date(a.date) : new Date(0);
+    const bDate = b.date ? new Date(b.date) : new Date(0);
+
+    // Event is closed if registration deadline has passed OR event date (or endDate) has passed
+    const aClosed = (a.registrationDeadline && new Date(a.registrationDeadline) < now) ||
+                    (a.endDate ? new Date(a.endDate) < now : aDate < now);
+    const bClosed = (b.registrationDeadline && new Date(b.registrationDeadline) < now) ||
+                    (b.endDate ? new Date(b.endDate) < now : bDate < now);
+
+    // Live (open) events come first before closed events
+    if (!aClosed && bClosed) return -1;
+    if (aClosed && !bClosed) return 1;
+
+    // If both are live: sort by soonest date first (ascending)
+    if (!aClosed && !bClosed) {
+      return aDate - bDate;
+    }
+
+    // If both are closed: sort by most recent date (descending)
+    return bDate - aDate;
+  });
+};
+
 // @desc    Get all events
 // @route   GET /api/events
 // @access  Public
@@ -29,9 +56,8 @@ exports.getEvents = async (req, res) => {
       ];
     }
 
-    const events = await Event.find(query)
-      .populate('createdBy', 'name email')
-      .sort({ date: 1 });
+    let events = await Event.find(query).populate('createdBy', 'name email');
+    events = sortEventsLiveFirst(events);
 
     res.status(200).json({
       success: true,
@@ -77,10 +103,11 @@ exports.getEventsByCollege = async (req, res) => {
   try {
     const collegeName = req.params.collegeName.replace(/-/g, ' ');
     
-    const events = await Event.find({ 
+    let events = await Event.find({ 
       college: new RegExp(collegeName, 'i'),
       status: 'approved'
-    }).sort({ date: 1 });
+    });
+    events = sortEventsLiveFirst(events);
 
     res.status(200).json({
       success: true,
@@ -98,10 +125,11 @@ exports.getEventsByCollege = async (req, res) => {
 // @access  Public
 exports.getEventsByInstitution = async (req, res) => {
   try {
-    const events = await Event.find({ 
+    let events = await Event.find({ 
       institutionType: req.params.institutionType.toUpperCase(),
       status: 'approved'
-    }).sort({ date: 1 });
+    });
+    events = sortEventsLiveFirst(events);
 
     res.status(200).json({
       success: true,

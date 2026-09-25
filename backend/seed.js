@@ -224,6 +224,119 @@ const seedDatabase = async () => {
         createdBy: normalUser._id
       },
       {
+        title: 'IIT Delhi Tryst 2026',
+        description: 'Tryst is North India\'s largest science and technology festival organized by IIT Delhi. It brings together over 60,000 students, researchers, and tech enthusiasts. Featuring paper presentations, AI showcases, autonomous drone races, and hackathons, Tryst is a center for futuristic technological innovation.',
+        type: 'Tech Fest',
+        college: 'IIT Delhi',
+        institutionType: 'IIT',
+        date: new Date('2026-10-28T09:00:00Z'),
+        endDate: new Date('2026-10-31T18:00:00Z'),
+        venue: 'Dogra Hall & Main Ground, IIT Delhi',
+        organizer: 'CAIC IIT Delhi',
+        contact: 'tryst@iitd.ac.in',
+        registrationLink: 'https://tryst-iitd.org',
+        image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=60',
+        highlights: ['Autonomous Drone League', 'Robotics and AI Keynote', 'Exhibitions from DRDO and ISRO'],
+        schedule: [
+          { time: '09:00 AM', activity: 'Inaugural Address' },
+          { time: '02:00 PM', activity: 'Robotics & Drone Competitions' }
+        ],
+        registrationDeadline: new Date('2026-10-20T23:59:59Z'),
+        status: 'approved',
+        createdBy: normalUser._id
+      },
+      {
+        title: 'National Cloud Computing & DevOps Workshop',
+        description: 'A hands-on 2-day workshop on Docker, Kubernetes, AWS, and CI/CD pipelines hosted by IIIT Allahabad. Learn how to architect microservices, manage container orchestration, and deploy fault-tolerant production infrastructure.',
+        type: 'Workshop',
+        college: 'IIIT Allahabad',
+        institutionType: 'IIIT',
+        date: new Date('2026-11-18T10:00:00Z'),
+        endDate: new Date('2026-11-19T17:00:00Z'),
+        venue: 'CC3 Computer Lab, IIIT Allahabad',
+        organizer: 'GeekHaven Cloud Wing',
+        contact: 'cloud-workshop@iiita.ac.in',
+        registrationLink: 'https://iiita.ac.in/cloud-workshop',
+        image: 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=800&auto=format&fit=crop&q=60',
+        highlights: ['Hands-on Kubernetes labs', 'AWS credits for participants', 'Industry certification upon completion'],
+        schedule: [
+          { time: '10:00 AM', activity: 'Docker & Containerization Architecture' },
+          { time: '02:00 PM', activity: 'Kubernetes Cluster Setup & Deployment' }
+        ],
+        registrationDeadline: new Date('2026-11-10T23:59:59Z'),
+        status: 'approved',
+        createdBy: normalUser._id
+      },
+      {
+        // CLOSED / PAST EVENT 1
+        title: 'Pan-IIT Quantum Computing Symposium 2025',
+        description: 'An international research symposium exploring quantum algorithms, cryptography, and hardware. Leading researchers from IBM Quantum, Rigetti, and IITs delivered keynotes on quantum supremacy and Qiskit development.',
+        type: 'Seminar',
+        college: 'IIT Kanpur',
+        institutionType: 'IIT',
+        date: new Date('2025-11-10T09:00:00Z'),
+        endDate: new Date('2025-11-12T17:00:00Z'),
+        venue: 'Outreach Auditorium, IIT Kanpur',
+        organizer: 'Quantum Information Group, IITK',
+        contact: 'quantum2025@iitk.ac.in',
+        registrationLink: 'https://iitk.ac.in/quantum-2025',
+        image: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop&q=60',
+        highlights: ['IBM Qiskit Masterclass', 'Quantum Cryptography Keynote', 'Poster Presentations'],
+        schedule: [
+          { time: '09:00 AM', activity: 'Opening Keynote' },
+          { time: '03:00 PM', activity: 'Qiskit Live Demo' }
+        ],
+        registrationDeadline: new Date('2025-11-01T23:59:59Z'),
+        status: 'approved',
+        createdBy: normalUser._id
+      },
+      {
+        // CLOSED / PAST EVENT 2
+        title: 'National AI & ML Summit 2025',
+        description: 'A comprehensive summit discussing Transformers, Large Language Models, and Generative AI. Hosted by NIT Calicut, featuring workshops on PyTorch, Fine-Tuning LLMs, and Computer Vision.',
+        type: 'Workshop',
+        college: 'NIT Calicut',
+        institutionType: 'NIT',
+        date: new Date('2025-08-15T09:00:00Z'),
+        endDate: new Date('2025-08-17T18:00:00Z'),
+        venue: 'Aryabhatta Hall, NIT Calicut',
+        organizer: 'Centre for AI, NIT Calicut',
+        contact: 'aisummit@nitc.ac.in',
+        registrationLink: 'https://nitc.ac.in/ai-summit-2025',
+        image: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=60',
+        highlights: ['LLM Fine-tuning Masterclass', 'Ethics in AI Panel', 'GPU-accelerated Lab Work'],
+        schedule: [
+          { time: '09:30 AM', activity: 'Deep Learning Foundations' },
+          { time: '02:00 PM', activity: 'Fine-tuning Llama models' }
+        ],
+        registrationDeadline: new Date('2025-08-05T23:59:59Z'),
+        status: 'approved',
+        createdBy: normalUser._id
+      },
+      {
+        // CLOSED / PAST EVENT 3
+        title: 'Winter Code-A-Thon 2025',
+        description: 'A 24-hour speed competitive programming contest held online across India. Over 2,000 participants competed to solve complex algorithmic puzzles in C++, Python, and Java.',
+        type: 'Coding Contest',
+        college: 'IIIT Bangalore',
+        institutionType: 'IIIT',
+        date: new Date('2025-12-01T10:00:00Z'),
+        endDate: new Date('2025-12-02T10:00:00Z'),
+        venue: 'Online - CodeChef Platform',
+        organizer: 'Zense Coding Club, IIITB',
+        contact: 'codeathon@iiitb.ac.in',
+        registrationLink: 'https://iiitb.ac.in/codeathon',
+        image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=60',
+        highlights: ['Over 2000 coders registered', 'Cash prize pool of ₹1,00,000', 'Speed round elimination'],
+        schedule: [
+          { time: '10:00 AM', activity: 'Contest Begins' },
+          { time: 'Next Day 10:00 AM', activity: 'Final Leaderboard & Results' }
+        ],
+        registrationDeadline: new Date('2025-11-28T23:59:59Z'),
+        status: 'approved',
+        createdBy: normalUser._id
+      },
+      {
         // PENDING EVENT FOR DEMOING ADMIN APPROVAL
         title: 'Incident 2026 - National Battle of Bands',
         description: 'The National Battle of Bands at Incident (NIT Surathkal\'s cultural fest) is the ultimate battleground for semi-professional rock and fusion bands across India. Competing for fame, bragging rights, and a massive cash prize, bands will bring their absolute best sets of original compositions and covers to light up the beachside amphitheater.',
@@ -307,7 +420,7 @@ const seedDatabase = async () => {
     console.log('Created accounts:');
     console.log('  1. ADMIN: email="admin@eventopia.com" password="AdminPassword123"');
     console.log('  2. USER:  email="user@eventopia.com"  password="UserPassword123"');
-    console.log('Created events: 10 total (7 approved, 3 pending)');
+    console.log(`Created events: ${eventsData.length} total`);
     console.log('====================================================');
 
     await mongoose.disconnect();

@@ -125,9 +125,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/', apiLimiter);
 
 // Database connection
-// Removed deprecated options: useNewUrlParser and useUnifiedTopology
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/eventopia')
-.then(() => console.log('MongoDB Connected'))
+.then(async () => {
+    console.log('MongoDB Connected');
+    try {
+        const Event = require('./models/Event');
+        const count = await Event.countDocuments();
+        if (count === 0) {
+            console.log('[Auto-Seed] No events found in database. Running seed process...');
+            const { spawn } = require('child_process');
+            const seedProc = spawn('node', ['seed.js'], { cwd: __dirname, stdio: 'inherit' });
+            seedProc.on('close', (code) => {
+                console.log(`[Auto-Seed] Seed process finished with exit code ${code}`);
+            });
+        }
+    } catch (seedErr) {
+        console.error('[Auto-Seed] Failed auto-seed check:', seedErr.message);
+    }
+})
 .catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
