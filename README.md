@@ -193,6 +193,33 @@ docker compose down
 docker compose down -v
 ```
 
+## Automatic EC2 Deployment
+
+The workflow at `.github/workflows/deploy-ec2.yml` deploys automatically after every push to `main`. It uploads the source archive over SSH, preserves the existing EC2 `.env`, rebuilds the Docker images, and runs `docker compose up -d`. It does not run `seed.js`, so production database data is preserved.
+
+### One-time EC2 setup
+
+1. Run `deploy.ps1` once, or manually install Docker and create `~/eventopia` on the EC2 instance.
+2. Ensure `~/eventopia/.env` exists on EC2 with production values. Do not commit this file.
+3. Confirm the EC2 user can run Docker with `sudo docker compose`.
+4. Add these GitHub repository secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `EC2_HOST` | EC2 public IP address or DNS name |
+| `EC2_USER` | SSH user, usually `ubuntu` |
+| `EC2_SSH_KEY` | Complete contents of the EC2 private key file |
+
+After that, push to `main`:
+
+```powershell
+git add .
+git commit -m "Describe the change"
+git push origin main
+```
+
+Monitor deployment from GitHub: **Actions → Deploy Eventopia to EC2**. For a manual deployment without a commit, use **Run workflow** on the same workflow page.
+
 ### Troubleshooting
 
 | Issue | Fix |

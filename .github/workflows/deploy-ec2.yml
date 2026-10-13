@@ -1,0 +1,86 @@
+name: Deploy Eventopia to EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: eventopia-production-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/eventopia-ec2
+          chmod 600 ~/.ssh/eventopia-ec2
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Package application
+        run: |
+          tar --exclude='.git' \
+              --exclude='node_modules' \
+              --exclude='frontend/node_modules' \
+              --exclude='backend/node_modules' \
+              --exclude='frontend/dist' \
+              --exclude='*.env' \
+              --exclude='*.env.*' \
+              --exclude='*.pem' \
+              --exclude='eventopia.tar.gz' \
+              -czf eventopia.tar.gz .
+
+      - name: Upload application archive
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          scp -i ~/.ssh/eventopia-ec2 eventopia.tar.gz "$EC2_USER@$EC2_HOST:/tmp/eventopia.tar.gz"
+
+      - name: Extract and restart application
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/eventopia-ec2 "$EC2_USER@$EC2_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          APP_DIR="$HOME/eventopia"
+          RELEASE_DIR="$HOME/eventopia-release"
+
+          rm -rf "$RELEASE_DIR"
+          mkdir -p "$RELEASE_DIR"
+          tar -xzf /tmp/eventopia.tar.gz -C "$RELEASE_DIR"
+          rm -f /tmp/eventopia.tar.gz
+
+          if [ ! -f "$APP_DIR/.env" ]; then
+            echo "Missing $APP_DIR/.env. Create it from .env.example before the first automated deployment."
+            exit 1
+          fi
+
+          cp "$APP_DIR/.env" "$RELEASE_DIR/.env"
+          mkdir -p "$APP_DIR"
+          find "$APP_DIR" -mindepth 1 -maxdepth 1 ! -name '.env' -exec rm -rf {} +
+          cp -a "$RELEASE_DIR"/. "$APP_DIR"/
+          rm -rf "$RELEASE_DIR"
+
+          cd "$APP_DIR"
+          sudo docker compose up --build -d --remove-orphans
+          sudo docker compose ps
+          sudo docker image prune -f
+          REMOTE
+
+      - name: Deployment summary
+        run: echo "Eventopia deployed successfully to EC2."
