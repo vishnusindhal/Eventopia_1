@@ -81,6 +81,7 @@ const invalidatePattern = async (pattern) => {
 const invalidateAllLists = async () => {
   await Promise.all([
     invalidatePattern(cacheKeys.patterns.allEventsList),
+    invalidatePattern(cacheKeys.patterns.allRegistrationCounts),
     invalidatePattern(cacheKeys.patterns.allSearches),
     invalidatePattern(cacheKeys.patterns.allColleges),
     invalidatePattern(cacheKeys.patterns.allInstitutions),
@@ -98,6 +99,7 @@ const invalidateEventData = async (eventId, collegeName, institutionType, creato
     // Delete single event cache if eventId exists
     if (eventId) {
       promises.push(del(cacheKeys.eventDetails(eventId)));
+      promises.push(del(cacheKeys.registrationCount(eventId)));
     }
 
     // Invalidate general list and search caches

@@ -8,6 +8,11 @@ let isConnected = false;
  * Provides auto-reconnect, failure logging, and graceful fallbacks.
  */
 const initRedis = async () => {
+  if (process.env.REDIS_ENABLED === 'false') {
+    console.log('[Redis] Disabled for this environment; using MongoDB fallback.');
+    return;
+  }
+
   const url = process.env.REDIS_URL || 'redis://localhost:6379';
   console.log(`[Redis] Connecting to Redis at ${url}...`);
 

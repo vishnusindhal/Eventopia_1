@@ -1,9 +1,13 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const path = require('path');
 const User = require('./models/User');
 const Event = require('./models/Event');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.join(__dirname, '.env.local'), override: true });
+}
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/eventopia';
 
@@ -412,7 +416,10 @@ const seedDatabase = async () => {
     ];
 
     console.log('Inserting events...');
-    await Event.insertMany(eventsData);
+      await Event.insertMany(eventsData.map(event => ({
+        ...event,
+        capacity: event.capacity ?? 100
+      })));
     console.log('Events inserted successfully.');
 
     console.log('====================================================');

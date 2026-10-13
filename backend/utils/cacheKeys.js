@@ -4,6 +4,7 @@
 module.exports = {
   // Event Keys
   eventDetails: (id) => `events:id:${id}`,
+  registrationCount: (id) => `events:registrations:${id}`,
   eventList: (queryString = '') => `events:list:${queryString}`,
   eventSearch: (query = '') => `events:search:${query.toLowerCase().trim()}`,
   
@@ -24,6 +25,7 @@ module.exports = {
   // Glob/Wildcard patterns for invalidation
   patterns: {
     allEventsList: 'events:list:*',
+    allRegistrationCounts: 'events:registrations:*',
     allSearches: 'events:search:*',
     allColleges: 'college:events:*',
     allInstitutions: 'institution:*',

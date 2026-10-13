@@ -14,6 +14,10 @@ const EventCard = ({ event }) => {
   const mode = isOnline ? 'Online' : 'Offline';
   
   const isRegistrationOpen = !event.registrationDeadline || new Date(event.registrationDeadline) > new Date();
+  const registeredCount = event.registrationCount ?? event.registeredUsers?.length ?? 0;
+  const hasCapacity = event.capacity !== null && event.capacity !== undefined;
+  const seatsRemaining = hasCapacity ? Math.max(event.capacity - registeredCount, 0) : null;
+  const isFull = hasCapacity && seatsRemaining === 0;
 
   return (
     <Card className="flex flex-col h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden group hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300">
@@ -75,6 +79,12 @@ const EventCard = ({ event }) => {
             </div>
           )}
 
+          <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-indigo-500 mr-2.5">Seats</span>
+            <span>{hasCapacity ? `${registeredCount} / ${event.capacity} registered` : `${registeredCount} registered`}</span>
+            {hasCapacity && <span className="ml-2">· {isFull ? 'Event Full' : `${seatsRemaining} remaining`}</span>}
+          </div>
+
           {/* Fee */}
           {event.fee !== undefined && (
             <div className="flex items-center text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -88,13 +98,13 @@ const EventCard = ({ event }) => {
         <Link to={`/event/${event._id || event.id}`} className="block mt-auto">
           <button
             className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${
-              isRegistrationOpen
+              isRegistrationOpen && !isFull
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20'
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
             }`}
-            disabled={!isRegistrationOpen}
+            disabled={!isRegistrationOpen || isFull}
           >
-            {isRegistrationOpen ? 'Register Now' : 'Registration Closed'}
+            {!isRegistrationOpen ? 'Registration Closed' : isFull ? 'Event Full' : 'Register Now'}
           </button>
         </Link>
       </div>

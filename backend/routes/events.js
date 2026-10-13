@@ -40,6 +40,7 @@ router.post('/', protect, submitEventLimiter, [
   body('college').notEmpty().withMessage('College name is required'),
   body('institutionType').notEmpty().withMessage('Institution type is required'),
   body('date').notEmpty().withMessage('Event date is required'),
+  body('capacity').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Capacity must be a positive whole number'),
   body('venue').notEmpty().withMessage('Venue is required'),
   body('organizer').notEmpty().withMessage('Organizer name is required'),
   body('contact').isEmail().withMessage('Valid contact email is required')

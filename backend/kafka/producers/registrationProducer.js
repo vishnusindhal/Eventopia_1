@@ -10,7 +10,7 @@ const { TOPICS } = require('../topics');
 /**
  * Publish when a student registers for an event.
  */
-const publishRegistrationCreated = async (event, userId, userName, userEmail) => {
+const publishRegistrationCreated = async (event, userId, userName, userEmail, registrationId) => {
   await publishEvent(TOPICS.REGISTRATION_CREATED, event._id.toString(), {
     eventId: event._id.toString(),
     eventTitle: event.title,
@@ -19,6 +19,7 @@ const publishRegistrationCreated = async (event, userId, userName, userEmail) =>
     eventVenue: event.venue || 'Online',
     college: event.college,
     organizerId: event.createdBy.toString(),
+    registrationId: registrationId?.toString(),
     userId,
     userName: userName || 'Student',
     userEmail: userEmail || ''

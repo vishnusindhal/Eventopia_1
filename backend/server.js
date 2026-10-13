@@ -3,11 +3,17 @@ const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const rateLimit = require('express-rate-limit');
+
+// Load the base environment first, then use ignored .env.local overrides for development.
+dotenv.config({ path: path.join(__dirname, '.env') });
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config({ path: path.join(__dirname, '.env.local'), override: true });
+}
+
 const { initRedis } = require('./config/redis');
 const { initKafka, shutdownKafka } = require('./kafka');
-
-dotenv.config();
 
 // Initialize Redis Client
 initRedis();
@@ -130,14 +136,21 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/eventopia
     console.log('MongoDB Connected');
     try {
         const Event = require('./models/Event');
+        const registrationService = require('./services/registrationService');
+        await registrationService.synchronizeRegistrationCounts();
+        console.log('[Migration] Legacy event registration counts synchronized');
         const count = await Event.countDocuments();
-        if (count === 0) {
-            console.log('[Auto-Seed] No events found in database. Running seed process...');
+        const User = require('./models/User');
+        const userCount = await User.countDocuments();
+        if (count === 0 && userCount === 0) {
+            console.log('[Auto-Seed] Database is empty. Running seed process...');
             const { spawn } = require('child_process');
             const seedProc = spawn('node', ['seed.js'], { cwd: __dirname, stdio: 'inherit' });
             seedProc.on('close', (code) => {
                 console.log(`[Auto-Seed] Seed process finished with exit code ${code}`);
             });
+        } else if (count === 0) {
+            console.warn('[Auto-Seed] Users exist but no events were found; skipping destructive seed.');
         }
     } catch (seedErr) {
         console.error('[Auto-Seed] Failed auto-seed check:', seedErr.message);

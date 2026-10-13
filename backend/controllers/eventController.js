@@ -1,9 +1,9 @@
 const Event = require('../models/Event');
-const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const cacheService = require('../services/cacheService');
 const eventProducer = require('../kafka/producers/eventProducer');
 const registrationProducer = require('../kafka/producers/registrationProducer');
+const registrationService = require('../services/registrationService');
 
 // Helper function to sort events: Live/Upcoming events on top, Closed/Past events at bottom
 const sortEventsLiveFirst = (eventsList) => {
@@ -152,6 +152,13 @@ exports.createEvent = async (req, res) => {
   }
 
   try {
+    if (req.body.capacity !== undefined && req.body.capacity !== null && req.body.capacity !== '') {
+      const capacity = Number(req.body.capacity);
+      if (!Number.isInteger(capacity) || capacity < 1) {
+        return res.status(400).json({ success: false, code: 'INVALID_CAPACITY', message: 'Capacity must be a positive whole number' });
+      }
+      req.body.capacity = capacity;
+    }
     req.body.createdBy = req.user.id;
     
     const event = await Event.create(req.body);
@@ -188,6 +195,24 @@ exports.updateEvent = async (req, res) => {
     // Check if user is event owner or admin
     if (event.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to update this event' });
+    }
+
+    if (req.body.capacity !== undefined && req.body.capacity !== null && req.body.capacity !== '') {
+      const capacity = Number(req.body.capacity);
+      if (!Number.isInteger(capacity) || capacity < 1) {
+        return res.status(400).json({ success: false, code: 'INVALID_CAPACITY', message: 'Capacity must be a positive whole number' });
+      }
+      const currentRegistrations = event.registrationCount ?? event.registeredUsers.length;
+      if (capacity < currentRegistrations) {
+        return res.status(409).json({
+          success: false,
+          code: 'CAPACITY_BELOW_REGISTRATIONS',
+          message: `Capacity cannot be lower than the ${currentRegistrations} confirmed registrations`
+        });
+      }
+      req.body.capacity = capacity;
+    } else if (req.body.capacity === null || req.body.capacity === '') {
+      req.body.capacity = null;
     }
 
     event = await Event.findByIdAndUpdate(req.params.id, req.body, {
@@ -249,24 +274,7 @@ exports.deleteEvent = async (req, res) => {
 // @access  Private
 exports.registerForEvent = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
-
-    if (!event) {
-      return res.status(404).json({ success: false, message: 'Event not found' });
-    }
-
-    // Check if already registered
-    if (event.registeredUsers.includes(req.user.id)) {
-      return res.status(400).json({ success: false, message: 'Already registered for this event' });
-    }
-
-    event.registeredUsers.push(req.user.id);
-    await event.save();
-
-    // Add to user's registered events
-    const user = await User.findByIdAndUpdate(req.user.id, {
-      $push: { registeredEvents: event._id }
-    }, { new: true }).select('name email');
+    const { event, user, registration } = await registrationService.register(req.params.id, req.user.id);
 
     // Invalidate event cache, lists, and registering/creator stats
     await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
@@ -274,18 +282,26 @@ exports.registerForEvent = async (req, res) => {
 
     // Publish registration.created to Kafka (fire-and-forget)
     registrationProducer.publishRegistrationCreated(
-      event, req.user.id, user?.name, user?.email
+      event, req.user.id, user?.name, user?.email, registration?._id
     ).catch(err => {
       console.error('[RegisterEvent] Kafka publish error:', err.message);
     });
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      message: 'Successfully registered for event'
+      message: 'Successfully registered for event',
+      event: {
+        id: event._id,
+        capacity: event.capacity,
+        registrationCount: event.registrationCount,
+        seatsRemaining: event.capacity === null || event.capacity === undefined
+          ? null
+          : Math.max(event.capacity - event.registrationCount, 0)
+      }
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(error.statusCode || 500).json({ success: false, code: error.code, message: error.message || 'Server error' });
   }
 };
 
@@ -294,26 +310,7 @@ exports.registerForEvent = async (req, res) => {
 // @access  Private
 exports.unregisterFromEvent = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
-
-    if (!event) {
-      return res.status(404).json({ success: false, message: 'Event not found' });
-    }
-
-    // Check if registered
-    if (!event.registeredUsers.includes(req.user.id)) {
-      return res.status(400).json({ success: false, message: 'Not registered for this event' });
-    }
-
-    event.registeredUsers = event.registeredUsers.filter(
-      userId => userId.toString() !== req.user.id
-    );
-    await event.save();
-
-    // Remove from user's registered events
-    const user = await User.findByIdAndUpdate(req.user.id, {
-      $pull: { registeredEvents: event._id }
-    }, { new: true }).select('name');
+    const { event, user } = await registrationService.unregister(req.params.id, req.user.id);
 
     // Invalidate cache
     await cacheService.invalidateEventData(event._id, event.college, event.institutionType, event.createdBy.toString());
@@ -332,7 +329,7 @@ exports.unregisterFromEvent = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(error.statusCode || 500).json({ success: false, code: error.code, message: error.message || 'Server error' });
   }
 };
 

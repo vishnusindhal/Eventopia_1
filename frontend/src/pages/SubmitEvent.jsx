@@ -25,6 +25,7 @@ const SubmitEvent = () => {
     institutionType: 'IIIT',
     date: '',
     endDate: '',
+    capacity: '',
     venue: '',
     organizer: '',
     contact: '',
@@ -125,7 +126,7 @@ const SubmitEvent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     setLoading(true);
     setError('');
 
@@ -137,7 +138,13 @@ const SubmitEvent = () => {
     }
 
     try {
-      const res = await createEvent(formData);
+      const payload = { ...formData };
+      if (formData.capacity) {
+        payload.capacity = Number(formData.capacity);
+      } else {
+        delete payload.capacity;
+      }
+      await createEvent(payload);
       setSubmitted(true);
 
       setTimeout(() => {
@@ -345,6 +352,24 @@ const SubmitEvent = () => {
           </div>
 
           <div>
+            <label htmlFor="capacity" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Maximum Capacity
+            </label>
+            <Input
+              type="number"
+              id="capacity"
+              name="capacity"
+              value={formData.capacity}
+              onChange={handleChange}
+              min="1"
+              step="1"
+              placeholder="Leave blank for unlimited registration"
+              className="w-full"
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Confirmed registrations cannot exceed this number.</p>
+          </div>
+
+          <div>
             <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Event Description *
             </label>
@@ -484,4 +509,4 @@ const SubmitEvent = () => {
   );
 };
 
-export default SubmitEvent;
+export default SubmitEvent;

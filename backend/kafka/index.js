@@ -23,6 +23,11 @@ const kafkaLogger = require('./kafkaLogger');
  * and consumers/producers will retry automatically.
  */
 const initKafka = async () => {
+  if (process.env.KAFKA_ENABLED === 'false') {
+    kafkaLogger.logSystemWarn('DISABLED', { message: 'Kafka is disabled for this environment' });
+    return;
+  }
+
   kafkaLogger.logSystem('INITIALIZING');
 
   try {

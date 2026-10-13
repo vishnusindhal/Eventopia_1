@@ -81,7 +81,11 @@ npm start
 - name, email, password, college, institutionType, role, registeredEvents
 
 ### Event Model
-- title, description, type, college, institutionType, date, endDate, venue, organizer, contact, registrationLink, image, highlights, schedule, status, createdBy, registeredUsers
+- title, description, type, college, institutionType, date, endDate, venue, organizer, contact, registrationLink, image, highlights, schedule, status, createdBy, registeredUsers, capacity, registrationCount
+
+### Registration Capacity
+
+`capacity` is optional; missing or null means unlimited. `registrationCount` is maintained by the registration service. `Registration` stores one confirmed registration per event/user and has a unique compound index. MongoDB transactions are used when available; standalone MongoDB uses an atomic counter claim with compensation on follow-up failure.
 
 ## Authentication
 

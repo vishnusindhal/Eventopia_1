@@ -64,7 +64,7 @@ const EventDetails = () => {
       alert('Successfully registered for the event!');
       fetchEventDetails();
     } catch (error) {
-      alert(error.message || 'Failed to register for event');
+      alert(error.code === 'EVENT_FULL' ? 'Event Full' : error.code === 'ALREADY_REGISTERED' ? 'You are already registered for this event.' : error.message || 'Failed to register for event');
     } finally {
       setRegistering(false);
     }
@@ -101,7 +101,11 @@ const EventDetails = () => {
 
   const isOnline = event.venue?.toLowerCase().includes('online') || event.venue?.toLowerCase().includes('http');
   const mode = isOnline ? 'Online' : 'Offline';
-  const isRegistrationOpen = !event.registrationDeadline || new Date(event.registrationDeadline) > new Date();
+  const registeredCount = event.registrationCount ?? event.registeredUsers?.length ?? 0;
+  const hasCapacity = event.capacity !== null && event.capacity !== undefined;
+  const seatsRemaining = hasCapacity ? Math.max(event.capacity - registeredCount, 0) : null;
+  const isFull = hasCapacity && seatsRemaining === 0;
+  const isRegistrationOpen = (!event.registrationDeadline || new Date(event.registrationDeadline) > new Date()) && !isFull;
   const isOwner = user && event.createdBy && (user.id === event.createdBy._id || user._id === event.createdBy._id);
   const isOwnerOrAdmin = user && (user.role === 'admin' || (event.createdBy && (user.id === event.createdBy._id || user._id === event.createdBy._id)));
 
@@ -158,7 +162,7 @@ const EventDetails = () => {
                   : 'bg-slate-500 text-slate-300 cursor-not-allowed'
               }`}
             >
-              {registering ? 'Processing...' : (isRegistrationOpen ? 'Register Now' : 'Registration Closed')}
+              {registering ? 'Processing...' : (isFull ? 'Event Full' : isRegistrationOpen ? 'Register Now' : 'Registration Closed')}
             </button>
             <button className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors" aria-label="Bookmark">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -254,7 +258,7 @@ const EventDetails = () => {
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-900 dark:text-slate-100">Registered Participants</h3>
-                    <Badge variant="primary">{event.registeredUsers?.length || 0}</Badge>
+                    <Badge variant="primary">{registeredCount}</Badge>
                   </div>
                   {event.registeredUsers?.length > 0 && (
                     <div className="flex gap-2">
@@ -334,6 +338,26 @@ const EventDetails = () => {
                   <span className="font-bold text-slate-900 dark:text-slate-100">{event.fee === 0 || !event.fee ? 'Free' : `₹${event.fee}`}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700">
+                  <span className="text-sm text-slate-500">Capacity</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                    {hasCapacity ? `${event.capacity} seats` : 'Unlimited'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700">
+                  <span className="text-sm text-slate-500">Registered</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                    {hasCapacity ? `${registeredCount} / ${event.capacity}` : registeredCount}
+                  </span>
+                </div>
+                {hasCapacity && (
+                  <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700">
+                    <span className="text-sm text-slate-500">Availability</span>
+                    <span className={`font-semibold ${isFull ? 'text-red-600' : 'text-emerald-600'}`}>
+                      {isFull ? 'Event Full' : `${seatsRemaining} seat${seatsRemaining === 1 ? '' : 's'} remaining`}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700">
                   <span className="text-sm text-slate-500">Deadline</span>
                   <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{formatDate(event.registrationDeadline)}</span>
                 </div>
@@ -356,7 +380,7 @@ const EventDetails = () => {
                     : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                {registering ? 'Processing...' : (isRegistrationOpen ? 'Register Now' : 'Registration Closed')}
+                {registering ? 'Processing...' : (isFull ? 'Event Full' : isRegistrationOpen ? 'Register Now' : 'Registration Closed')}
               </button>
             </Card>
 

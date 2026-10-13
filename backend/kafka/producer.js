@@ -34,8 +34,13 @@ let isConnected = false;
  * and the producer will attempt reconnection.
  */
 const initProducer = async () => {
+  if (process.env.KAFKA_ENABLED === 'false') {
+    return;
+  }
+
   producer = kafka.producer({
     allowAutoTopicCreation: true,
+    idempotent: true,
     transactionTimeout: 30000
   });
 
@@ -67,6 +72,10 @@ const initProducer = async () => {
  * @param {object} payload - The message payload (will be JSON-serialized)
  */
 const publishEvent = async (topic, key, payload) => {
+  if (process.env.KAFKA_ENABLED === 'false') {
+    return;
+  }
+
   if (!producer) {
     kafkaLogger.logPublishFailed({ topic, key, error: 'Producer not initialized' });
     return;

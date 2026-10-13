@@ -26,6 +26,7 @@ Eventopia is a simple event discovery and management platform for college events
 - Unified User Profile (Manage personal info, submitted events, and registrations)
 ![User Profile](images/Profile.png)
 - **Following & Alerts System:** Follow specific institutes or categories to receive real-time in-app notifications and email alerts when new events are approved.
+- **Capacity-safe registration:** Organizers can set an optional maximum capacity; MongoDB atomically allocates seats and prevents duplicate or over-capacity registrations.
 
 ## Tech Stack
 
@@ -107,6 +108,8 @@ npm run dev
 ```
 
 The frontend development server uses Vite (default `http://localhost:5173`). Ensure `CLIENT_URL` or `CORS_ORIGIN` includes that origin for development.
+
+For local backend development, `backend/.env.local` overrides `backend/.env` and uses MongoDB at `mongodb://localhost:27017/eventopia`. Redis and Kafka are disabled by default locally; set `REDIS_ENABLED=true` and `KAFKA_ENABLED=true` when those services are running.
 
 ## Running with Docker Compose
 
@@ -201,6 +204,26 @@ docker compose down -v
 
 ---
 
+## Capacity and Registration
+
+Event creation accepts an optional positive integer `capacity`. Events without a capacity remain unlimited for backward compatibility. The API exposes `registrationCount` and the UI displays registered seats, remaining seats, or `Event Full`.
+
+Event pages display capacity in this format:
+
+```text
+Capacity: 100 seats
+Registered: 1 / 100
+Availability: 99 seats remaining
+```
+
+Registration uses MongoDB as the authority. On replica-set or sharded MongoDB deployments, the event counter, `Registration` document, legacy `registeredUsers` array, and user reference are committed in one transaction. On standalone MongoDB, the service uses an atomic conditional counter update followed by a unique registration insert and compensates the counter if a follow-up write fails.
+
+Existing events are supported: on backend startup, events missing `registrationCount` are synchronized from `registeredUsers`. Existing events with no `capacity` remain unlimited. The new unique `Registration` index is created automatically by MongoDB/Mongoose; deploy with database permissions that allow index creation or create `{ event: 1, user: 1 }` as a unique index manually.
+
+Successful registrations return `201`. Capacity and duplicate conflicts return `409` with stable codes `EVENT_FULL`, `ALREADY_REGISTERED`, or `CAPACITY_BELOW_REGISTRATIONS`; invalid capacities return `400` with `INVALID_CAPACITY`. Redis invalidates event detail, event lists/search, registration-count, and relevant user-stat keys after successful registration. Redis is never authoritative for seat availability.
+
+Registration Kafka messages are published only after the database operation commits. Kafka failures are logged using the existing fire-and-forget strategy and do not reclaim a successfully committed seat.
+
 ## API Endpoints (overview)
 
 Base: `/api`
@@ -247,6 +270,12 @@ Eventopia utilizes **Redis** as a high-performance in-memory cache and API rate 
 - **Cache Layer**: Redis caches expensive, high-frequency read operations.
 - **Fault Tolerance**: If Redis becomes offline or fails, the application automatically falls back to direct MongoDB queries, keeping all endpoints functional.
 
+### Event Page Cache and Seat Authority
+
+The event detail snapshot is cached under `events:id:<eventId>` and may contain the title, description, date, venue, organizer, capacity, and a registration-count snapshot. This improves event-page response time, but it is never used to approve registrations. MongoDB remains authoritative for `capacity` and `registrationCount`.
+
+For high-traffic events, a stale Redis snapshot can briefly display an old count. A registration request always performs MongoDB's atomic conditional seat claim. If another user has taken the final seat, the API returns `409 EVENT_FULL`; the frontend refreshes event details and displays the current availability. Successful registrations and cancellations invalidate event-detail, list/search, registration-count, and dashboard-statistic keys.
+
 ### Caching Strategy & Expirations
 
 Different TTL (Time-To-Live) values are applied to endpoints to balance performance and freshness:
@@ -267,7 +296,7 @@ To guarantee cache consistency, we avoid bulk flushes and selectively invalidate
 
 - **Create Event**: Invalidates cached query lists, searches, college, institution, and creator stats.
 - **Update / Approve / Delete Event**: Deletes specific event details cache (`events:id:<id>`), and invalidates all query lists, searches, college, institution, and creator stats.
-- **Register / Unregister**: Invaldates event details cache, query lists, and statistics for both the registrant and the creator.
+- **Register / Unregister**: Invalidates event details cache, query lists, registration-count keys, and statistics for both the registrant and the creator.
 - **Notification read/delete/inserted**: Deletes the specific user's count cache (`notifications:unread:<userId>`).
 - **Profile Update**: Invalidates user stats cache and general event lists.
 

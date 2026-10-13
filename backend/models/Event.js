@@ -66,6 +66,20 @@ const eventSchema = new mongoose.Schema({
   registrationDeadline: {
     type: Date
   },
+  capacity: {
+    type: Number,
+    default: null,
+    min: [1, 'Capacity must be at least 1'],
+    validate: {
+      validator: value => value === null || value === undefined || Number.isInteger(value),
+      message: 'Capacity must be a whole number'
+    }
+  },
+  registrationCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   views: {
     type: Number,
     default: 0
@@ -98,5 +112,6 @@ const eventSchema = new mongoose.Schema({
 eventSchema.index({ college: 1, date: 1 });
 eventSchema.index({ institutionType: 1 });
 eventSchema.index({ type: 1 });
+eventSchema.index({ status: 1, capacity: 1, registrationCount: 1 });
 
 module.exports = mongoose.model('Event', eventSchema);
