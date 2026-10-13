@@ -40,16 +40,7 @@ jobs:
 
       - name: Package application
         run: |
-          tar --exclude='.git' \
-              --exclude='node_modules' \
-              --exclude='frontend/node_modules' \
-              --exclude='backend/node_modules' \
-              --exclude='frontend/dist' \
-              --exclude='*.env' \
-              --exclude='*.env.*' \
-              --exclude='*.pem' \
-              --exclude='eventopia.tar.gz' \
-              -czf eventopia.tar.gz .
+          git archive --format=tar.gz --output=eventopia.tar.gz HEAD
 
       - name: Upload application archive
         env:
