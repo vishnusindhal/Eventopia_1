@@ -24,10 +24,19 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
+          test -n "$EC2_HOST" || { echo "EC2_HOST secret is empty"; exit 1; }
+          test -n "$EC2_SSH_KEY" || { echo "EC2_SSH_KEY secret is empty"; exit 1; }
+          case "$EC2_HOST" in
+            http://*|https://*|*/)
+              echo "EC2_HOST must contain only the IP or hostname, for example 13.53.201.140; do not include http:// or a trailing slash.";
+              exit 1
+              ;;
+          esac
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/eventopia-ec2
+          printf '%s\n' "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/eventopia-ec2
           chmod 600 ~/.ssh/eventopia-ec2
-          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/eventopia-ec2 > /dev/null || { echo "EC2_SSH_KEY is not a valid private key"; exit 1; }
+          ssh-keyscan -T 15 -H "$EC2_HOST" >> ~/.ssh/known_hosts || { echo "Could not resolve or reach EC2_HOST"; exit 1; }
 
       - name: Package application
         run: |
